@@ -74,9 +74,10 @@ class ForgotPasswordSerializer(serializers.ModelSerializer):
         return attrs
 
     def update_password(self):
-        user = User.objects.get(email=self.validated_data['email'], otp=self.validated_data['otp'])
-        if user:
+        try:
+            user = User.objects.get(email=self.validated_data['email'], otp=self.validated_data['otp'])
+            user.otp = None
             user.set_password(self.validated_data['password'])
             user.save()
-        else:
+        except User.DoesNotExist:
             raise serializers.ValidationError({'detail': "This user does not exist or otp incorrect or expired"})

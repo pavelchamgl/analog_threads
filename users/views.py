@@ -206,6 +206,8 @@ class ForgotPasswordVerifyApiView(APIView):
         if serializer.is_valid():
             serializer.update_password()
             return Response(serializer.data)
+        else:
+            return Response({'detail': serializer.error_messages})
 
 
 
