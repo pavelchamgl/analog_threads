@@ -29,6 +29,8 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     photo = models.ImageField(upload_to="", blank=True, null=True)
     bio = models.CharField(max_length=254, blank=True, null=True)
+    website = models.URLField(max_length=124, blank=True, null=True)
+    location = models.CharField(max_length=200, blank=True, null=True)
     # link=?
     is_email_verify = models.BooleanField(default=False)
     is_private = models.BooleanField(default=False)
@@ -47,8 +49,9 @@ class User(AbstractUser):
 
 
 class Follow(models.Model):
-    follower = models.ForeignKey(User, related_name='followers', on_delete=models.CASCADE)
-    following = models.ForeignKey(User, related_name='following', on_delete=models.CASCADE)
+    followee = models.ForeignKey(User, related_name='followee', on_delete=models.CASCADE)
+    follower = models.ForeignKey(User, related_name='follower', on_delete=models.CASCADE)
+    allowed = models.BooleanField(default=True)
 
 
 class OTP(models.Model):

@@ -84,7 +84,7 @@ TEMPLATES = [
 ]
 
 SWAGGER_SETTINGS = {
-    'DEFAULT_INFO': 'project.urls.swagger_info',
+    'DEFAULT_INFO': 'config.urls.swagger_info',
     'DEFAULT_AUTO_SCHEMA_CLASS': 'drf_yasg.inspectors.SwaggerAutoSchema',
     'SECURITY_DEFINITIONS': {
         'Basic': {

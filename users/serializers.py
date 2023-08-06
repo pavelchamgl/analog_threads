@@ -4,13 +4,65 @@ from rest_framework.validators import UniqueValidator
 
 from users import validators
 from users.exceptions import OTPExpired
-from users.models import User, OTP
+from users.models import User, OTP, Follow
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         models = User
         fields = ['email', 'username']
+
+
+class UserProfileDataSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        required=False,
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
+    bio = serializers.CharField(required=False)
+    website = serializers.CharField(required=False)
+    location = serializers.CharField(required=False)
+    photo = serializers.ImageField(required=False)
+
+    class Meta:
+        model = User
+        fields = ['pk', 'username', 'bio', 'website', 'location', 'photo']
+
+
+class FollowersSerializer(serializers.ModelSerializer):
+    follower = UserProfileDataSerializer()
+
+    class Meta:
+        model = Follow
+        fields = ['follower']
+
+
+class FollowsSerializer(serializers.ModelSerializer):
+    followee = UserProfileDataSerializer()
+
+    class Meta:
+        model = Follow
+        fields = ['followee']
+
+
+class MutualFollowSerializer(serializers.ModelSerializer):
+    followee = UserProfileDataSerializer()
+    follower = UserProfileDataSerializer()
+
+    class Meta:
+        model = Follow
+        fields = ['followee', 'follower']
+
+
+class FollowActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Follow
+        fields = ['followee']
+
+
+class FollowPendingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Follow
+        fields = ['follower']
 
 
 class OTPSerializer(serializers.ModelSerializer):

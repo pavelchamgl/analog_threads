@@ -18,4 +18,19 @@ urlpatterns = [
     path('confirm_email/', views.ConfirmEmailView.as_view(), name='confirm_email'),
     # path('confirm_email/verify/', views.ConfirmEmailOTPVerifyView.as_view(), name='confirm_email_otp'),
     path('confirm_email/update/', views.ConfirmEmailUpdateApiView.as_view(), name='confirm_email_update'),
+
+    path('user/profile/<int:pk>/', views.UserProfileView.as_view(), name='user_profile_data'),
+    path('user/profile/update/', views.UserProfileUpdateView.as_view(), name='user_profile_update'),
+
+    path('user/profile/follow_requests/', views.FollowersListPendingView.as_view(), name='followers_pending_list'),
+    path('user/profile/follow_requests/allow/', views.FollowPendingConfirm.as_view(), name='followers_pending_allow'),
+    path('user/profile/follow_requests/decline/', views.FollowPendingDecline.as_view(), name='followers_pending_decline'),
+
+    path('user/profile/followers/<int:followee_pk>/', views.FollowersListView.as_view(), name='followers_list'),
+    path('user/profile/follows/<int:follower_pk>/', views.FollowingListView.as_view(), name='following_list'),
+    path('user/profile/follow/', views.FollowActionView.as_view(), name='follow_followee_action'),
+    path('user/profile/unfollow/', views.UnfollowActionView.as_view(), name='unfollow_followee_action'),
+    path('user/profile/delete/', views.DeleteFollowerView.as_view(), name='delete_follower_action'),
+
+
 ]
