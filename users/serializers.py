@@ -1,14 +1,30 @@
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from users import validators
-from users.models import User
+from users.exceptions import OTPExpired
+from users.models import User, OTP
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         models = User
         fields = ['email', 'username']
+
+
+class OTPSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(
+        required=True,
+    )
+    otp = serializers.IntegerField(
+        required=True,
+        validators=[validators.otp_validator]
+    )
+
+    class Meta:
+        model = OTP
+        fields = ['email', 'otp']
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -75,9 +91,67 @@ class ForgotPasswordSerializer(serializers.ModelSerializer):
 
     def update_password(self):
         try:
-            user = User.objects.get(email=self.validated_data['email'], otp=self.validated_data['otp'])
-            user.otp = None
-            user.set_password(self.validated_data['password'])
-            user.save()
-        except User.DoesNotExist:
+            otp = OTP.objects.get(user__email=self.validated_data['email'], value=self.validated_data['otp'])
+            if otp.expired_date < timezone.now():
+                raise OTPExpired
+            otp.value = None
+            otp.user.is_e = True
+            otp.user.set_password(self.validated_data['password'])
+            otp.save()
+        except (OTP.DoesNotExist, OTPExpired):
             raise serializers.ValidationError({'detail': "This user does not exist or otp incorrect or expired"})
+
+
+class ForgotPasswordMessageSendSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(
+        required=True,
+    )
+
+    class Meta:
+        model = User
+        fields = ['email']
+
+
+class ConfirmEmailSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(
+        required=True,
+    )
+
+    otp = serializers.IntegerField(
+        required=True,
+        validators=[validators.otp_validator]
+    )
+
+    class Meta:
+        model = User
+        fields = ('email', 'otp')
+
+    def update_email_confirmation(self):
+        try:
+            otp = OTP.objects.get(user__email=self.validated_data['email'], value=self.validated_data['otp'])
+            if otp.expired_date < timezone.now():
+                raise OTPExpired
+            otp.value = None
+            otp.user.is_email_verify = True
+            otp.save()
+        except (OTP.DoesNotExist, OTPExpired):
+            raise serializers.ValidationError({'detail': "This user does not exist or otp incorrect or expired"})
+
+
+class ConfirmEmailMessageSendSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(
+        required=True,
+    )
+
+    class Meta:
+        model = User
+        fields = ['email']
+
+    def validate(self, attrs):
+        if self.context['request'].user.email != attrs['email']:
+            raise serializers.ValidationError({"email": "You haven't permission to send confirm request to this mail"})
+
+        if self.context['request'].user.is_email_verify:
+            raise serializers.ValidationError({"email": "Email already confirmed"})
+
+        return attrs

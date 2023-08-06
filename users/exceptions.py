@@ -1,0 +1,3 @@
+class OTPExpired(Exception):
+    pass
+

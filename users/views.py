@@ -1,16 +1,15 @@
-from django.shortcuts import render
+from drf_yasg import openapi
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, generics
-from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from users.models import User
 from users import permissions, serializers
-from users.utils import send_reset_email
+from users.base_views import BaseOtpView, BaseOTPVerifyView
+from users.models import User
 
 
 class UserCreateApiView(generics.CreateAPIView):
@@ -60,114 +59,40 @@ class LogoutView(APIView):
             return Response({'detail': 'Invalid token or token not provided.'})
 
 
-class ForgotPasswordApiView(APIView):
+class ForgotPasswordApiView(BaseOtpView):
+    permission_classes = [AllowAny]
+    serializer = serializers.ForgotPasswordMessageSendSerializer
+
+    subject = "Password Recovery"
+    message = "Hi {username}! You can recover you password by using code: {otp}"
+    otp_title = "ForgotPassword"
+
+
+class ConfirmEmailView(BaseOtpView):
+    permission_classes = [IsAuthenticated]
+    serializer = serializers.ConfirmEmailMessageSendSerializer
+
+    subject = "Email Confirmation"
+    message = "Hi {username}! You can confirm you email by using code: {otp}"
+    otp_title = "EmailConfirmation"
+
+
+class ForgotPasswordOTPVerifyView(BaseOTPVerifyView):
+    serializer = serializers.OTPSerializer
     permission_classes = [AllowAny]
 
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'email': openapi.Schema(type=openapi.TYPE_STRING),
-            },
-            required=['email'],
-        ),
-        responses={
-            200: openapi.Response(
-                description='Reset password email sent successfully!',
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        'detail': openapi.Schema(type=openapi.TYPE_STRING),
-                    }
-                )
-            ),
-            400: openapi.Response(
-                description='User not found!',
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        'detail': openapi.Schema(type=openapi.TYPE_STRING),
-                    }
-                )
-            ),
-            500: openapi.Response(
-                description='Error sending email',
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        'detail': openapi.Schema(type=openapi.TYPE_STRING),
-                    }
-                )
-            ),
-        }
-    )
-    def post(self, request):
-        email = request.data['email']
-        user = User.objects.get(email=email)
-        if user:
-            otp, is_send = send_reset_email(user.email, user.username)
-            if not is_send:
-                return Response({"detail": "Error sending email"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
-            user.otp = otp
-            user.save()
-        else:
-            return Response({"detail": "User not found"}, status.HTTP_400_BAD_REQUEST)
-        return Response({"detail": "Reset password email sent successfully!"}, status.HTTP_200_OK)
+    otp_title = "ForgotPassword"
 
 
-class ForgotPasswordVerifyApiView(APIView):
-    permission_classes = [AllowAny]
+class ConfirmEmailOTPVerifyView(BaseOTPVerifyView):
+    serializer = serializers.OTPSerializer
+    permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'email': openapi.Schema(type=openapi.TYPE_STRING),
-                'otp': openapi.Schema(type=openapi.TYPE_INTEGER),
-            },
-            required=['email', 'otp'],
-        ),
-        responses={
-            200: openapi.Response(
-                description='OTP verified successfully!',
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        'detail': openapi.Schema(type=openapi.TYPE_STRING),
-                    }
-                )
-            ),
-            400: openapi.Response(
-                description='Bad Request',
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        'detail': openapi.Schema(type=openapi.TYPE_STRING),
-                    }
-                )
-            ),
-            404: openapi.Response(
-                description='User not found or Invalid email or OTP',
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        'detail': openapi.Schema(type=openapi.TYPE_STRING),
-                    }
-                )
-            ),
-        }
-    )
-    def post(self, request):
-        email = request.data['email']
-        otp = request.data['otp']
-        if not email or not otp:
-            return Response({"detail": "Please provide both email and OTP"}, status=status.HTTP_400_BAD_REQUEST)
+    otp_title = "EmailConfirmation"
 
-        try:
-            user = User.objects.get(email=email, otp=otp)
-        except User.DoesNotExist:
-            return Response({"detail": "Invalid email or OTP"}, status=status.HTTP_404_NOT_FOUND)
-        return Response({"detail": "OTP verified successfully!"})
+
+class ForgotPasswordUpdateApiView(APIView):
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -210,4 +135,43 @@ class ForgotPasswordVerifyApiView(APIView):
             return Response({'detail': serializer.error_messages})
 
 
+class ConfirmEmailUpdateApiView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING),
+                'otp': openapi.Schema(type=openapi.TYPE_INTEGER),
+            },
+            required=['email', 'otp'],
+        ),
+        responses={
+            200: openapi.Response(
+                description='Email confirm successfully',
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'detail': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+            404: openapi.Response(
+                description='Validation error',
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'detail': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+        }
+    )
+    def put(self, request):
+        serializer = serializers.ConfirmEmailSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.update_email_confirmation()
+            return Response(serializer.data)
+        else:
+            return Response({'detail': serializer.error_messages})
