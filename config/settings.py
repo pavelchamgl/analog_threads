@@ -11,8 +11,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-ecq8fzn*b52165-ozqb^h9wrobbw_zxy%56-j2yd=xkes*my_!'
 
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = 'your_google_oauth2_client_id'
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'your_google_oauth2_client_secret'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -21,8 +19,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'enotshow275@gmail.com'  # 'your-gmail-account@gmail.com'
 EMAIL_HOST_PASSWORD = 'ubzljypptuwkeevg'  # 'your-gmail-account-password'
 
-TWILIO_SID = "TWILIO_SID"
-TWILIO_AUTH_TOKEN = "TWILIO_AUTH_TOKEN"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -39,8 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'social_django',
-    'django_twilio',
+    # 'social_django',
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg',
