@@ -30,16 +30,6 @@ class Post(models.Model):
         self.mentioned_users.set(mentioned_users)
 
 
-class PostImage(models.Model):
-    image = models.ImageField(upload_to="")
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
-
-
-class Like(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
-
-
 class Comments(models.Model):
     text = models.CharField(max_length=1024)
     date_posted = models.DateTimeField(default=timezone.now)
