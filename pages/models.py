@@ -20,7 +20,7 @@ class Post(models.Model):
     date_posted = models.DateTimeField(auto_now_add=True)
     repost = models.ForeignKey("self", on_delete=models.CASCADE, blank=True, null=True)
     comments_permission = models.CharField(max_length=20, choices=comments_permissions_type)
-    mentioned_users = models.ManyToManyField(User, related_name='mentioned_in_posts', blank=True) #null=True???
+    mentioned_users = models.ManyToManyField(User, related_name='mentioned_in_posts', blank=True)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -40,7 +40,7 @@ class Like(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
 
 
-class Comments(models.Model): #rename
+class Comments(models.Model):
     text = models.CharField(max_length=1024)
     date_posted = models.DateTimeField(default=timezone.now)
     reply = models.ForeignKey("self", on_delete=models.CASCADE)
