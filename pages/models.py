@@ -21,6 +21,13 @@ class Post(models.Model):
     repost = models.ForeignKey("self", on_delete=models.CASCADE, blank=True, null=True)
     comments_permission = models.CharField(max_length=20, choices=comments_permissions_type)
     mentioned_users = models.ManyToManyField(User, related_name='mentioned_in_posts', blank=True)
+    likes = models.ManyToManyField(User, related_name='liked_post', blank=True)
+
+    def total_likes(self):
+        return self.likes.count()
+
+    def user_like(self, user):
+        return self.likes.filter(pk=user.pk).exists()
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
