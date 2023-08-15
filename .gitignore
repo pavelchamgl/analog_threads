@@ -111,6 +111,7 @@ GitHub.sublime-settings
 .history
 
 # Django Migrations
-**/migrations/
+**/migrations/*.py
+!**/migrations/__init__.py
 
 data.txt

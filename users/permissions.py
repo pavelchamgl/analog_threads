@@ -10,14 +10,22 @@ class NotAuthenticate(BasePermission):
             return True
 
 
-# TODO write permission
 class PublicOrPrivateProfilePermission(BasePermission):
     def has_permission(self, request, view):
+        profile_id = None
         followee_id = view.kwargs.get('followee_pk')
-        print(followee_id)
-        followee = get_object_or_404(User, pk=followee_id)
-        if not followee.is_private:
+        follower_id = view.kwargs.get('follower_pk')
+        profile_id = followee_id or follower_id
+        if profile_id is None:
+            return False
+        profile = get_object_or_404(User, pk=profile_id)
+        if not profile.is_private:
             return True
         else:
-            follow = Follow.objects.filter(followee_id=followee_id, follower_id=request.user.id, allowed=True).exists()
+            follow = Follow.objects.filter(
+                followee_id=profile_id if followee_id else request.user.id,
+                follower_id=request.user.id if followee_id else profile_id,
+                allowed=True
+            ).exists()
             return follow
+

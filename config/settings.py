@@ -34,17 +34,28 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
 
-    # 'social_django',
     'rest_framework',
+    'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'drf_yasg',
     'corsheaders',
+
+    'oauth2_provider',
+    'dj_rest_auth',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+
 
     'users.apps.UsersConfig',
     'pages.apps.PagesConfig',
 
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -57,6 +68,21 @@ MIDDLEWARE = [
 
     'corsheaders.middleware.CorsMiddleware',
 ]
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': '1043834167986-vc4sqj65ub4o4ifu0dgoj1ja1hpsl5m8.apps.googleusercontent.com',
+            'secret': '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',
+            'key': ''
+        }
+    }
+}
 
 CORS_ORIGIN_ALLOW_ALL = True
 
@@ -112,6 +138,9 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+REST_USE_JWT = True
+JWT_AUTH_COOKIE = 'access_token'
+JWT_AUTH_REFRESH_COOKIE = 'refresh-token'
 OTP_LIFETIME = timedelta(minutes=15)
 
 WSGI_APPLICATION = 'config.wsgi.application'
