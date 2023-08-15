@@ -1,7 +1,6 @@
 import re
 
 from django.db import models
-from django.utils import timezone
 
 from users.models import User
 
@@ -37,12 +36,19 @@ class Post(models.Model):
         self.mentioned_users.set(mentioned_users)
 
 
-class Comments(models.Model):
-    text = models.CharField(max_length=1024)
-    date_posted = models.DateTimeField(default=timezone.now)
-    reply = models.ForeignKey("self", on_delete=models.CASCADE)
+class Comment(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    text = models.CharField(max_length=1024)
+    date_posted = models.DateTimeField(auto_now_add=True)
+    reply = models.ForeignKey("self", on_delete=models.CASCADE, blank=True, null=True)
+    likes = models.ManyToManyField(User, related_name='liked_comment', blank=True)
+
+    def total_likes(self):
+        return self.likes.count()
+
+    def user_like(self, user):
+        return self.likes.filter(pk=user.pk).exists()
 
 # class Notification(models.Model):
 #     pass
