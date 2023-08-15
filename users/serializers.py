@@ -1,6 +1,8 @@
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.generics import get_object_or_404
 from rest_framework.validators import UniqueValidator
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from users import validators
 from users.exceptions import OTPExpired
@@ -30,18 +32,44 @@ class UserProfileDataSerializer(serializers.ModelSerializer):
 
 class FollowersSerializer(serializers.ModelSerializer):
     follower = UserProfileDataSerializer()
+    is_followed = serializers.SerializerMethodField()
 
     class Meta:
         model = Follow
-        fields = ['follower']
+        fields = ['follower', 'is_followed']
+
+    def get_is_followed(self, obj):
+        user_id = self.context['request'].user.id
+        followee_id = obj.follower.id
+
+        if user_id == followee_id:
+            return "You"
+        try:
+            follow = Follow.objects.get(followee_id=followee_id, follower_id=user_id)
+        except Follow.DoesNotExist:
+            return "Not Followed"
+        return "Followed" if follow.allowed else "Pending"
 
 
 class FollowsSerializer(serializers.ModelSerializer):
     followee = UserProfileDataSerializer()
+    is_followed = serializers.SerializerMethodField()
 
     class Meta:
         model = Follow
-        fields = ['followee']
+        fields = ['followee', 'is_followed']
+
+    def get_is_followed(self, obj):
+        user_id = self.context['request'].user.id
+        followee_id = obj.followee.id
+
+        if user_id == followee_id:
+            return "You"
+        try:
+            follow = Follow.objects.get(followee_id=followee_id, follower_id=user_id)
+        except Follow.DoesNotExist:
+            return "Not Followed"
+        return "Followed" if follow.allowed else "Pending"
 
 
 class MutualFollowSerializer(serializers.ModelSerializer):
@@ -50,7 +78,7 @@ class MutualFollowSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Follow
-        fields = ['followee', 'follower']
+        fields = ['followee', 'follower', 'allowed']
 
 
 class FollowActionSerializer(serializers.ModelSerializer):
@@ -207,3 +235,15 @@ class ConfirmEmailMessageSendSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"email": "Email already confirmed"})
 
         return attrs
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    remember_me = serializers.BooleanField(required=False)
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        remember_me = self.context['request'].data.get('remember_me')
+        if remember_me:
+            refresh_token = data['refresh']
+            self.context['request'].set_cookie('refresh_token', refresh_token, httponly=True, max_age=3600 * 24 * 7)
+        return data

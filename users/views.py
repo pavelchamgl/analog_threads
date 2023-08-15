@@ -1,3 +1,7 @@
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from dj_rest_auth.registration.serializers import SocialLoginSerializer
+from dj_rest_auth.registration.views import SocialLoginView
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, generics
@@ -6,11 +10,18 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from users import permissions, serializers
 from users.base_views import BaseOtpView, BaseOTPVerifyView
 from users.models import User, Follow
-from users.serializers import UserProfileDataSerializer, FollowsSerializer
+
+
+class TestView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        return Response({'ok': f'You authenticated! {self.request.user}'})
 
 
 class UserCreateApiView(generics.CreateAPIView):
@@ -20,17 +31,25 @@ class UserCreateApiView(generics.CreateAPIView):
     serializer_class = serializers.SignUpSerializer
 
 
-class UserProfileView(generics.RetrieveAPIView):
-    """API view to retrieve user profile data."""
+class UserProfileViewByPK(generics.RetrieveAPIView):
+    """API view to retrieve user profile data by id."""
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
-    serializer_class = UserProfileDataSerializer
+    serializer_class = serializers.UserProfileDataSerializer
+
+
+class UserProfileViewByUsername(generics.RetrieveAPIView):
+    """API view to retrieve user profile data by username."""
+    queryset = User.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = serializers.UserProfileDataSerializer
+    lookup_field = 'username'
 
 
 class UserProfileUpdateView(generics.UpdateAPIView):
     """API view to update user profile data."""
     permission_classes = (IsAuthenticated,)
-    serializer_class = UserProfileDataSerializer
+    serializer_class = serializers.UserProfileDataSerializer
 
     def get_object(self):
         return self.request.user
@@ -41,10 +60,21 @@ class UserProfileUpdateView(generics.UpdateAPIView):
         return queryset
 
 
+class GoogleLoginView(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    client_class = OAuth2Client
+    serializer_class = SocialLoginSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        kwargs['context'] = self.get_serializer_context()
+        return serializer_class(*args, **kwargs)
+
+
 class FollowersListView(generics.ListAPIView):
     """API view to retrieve a list of followers for a given user."""
     permission_classes = (permissions.PublicOrPrivateProfilePermission,)
-    serializer_class = FollowsSerializer
+    serializer_class = serializers.FollowersSerializer
 
     def get_queryset(self):
         followee_id = self.kwargs.get('followee_pk')
@@ -55,7 +85,7 @@ class FollowersListView(generics.ListAPIView):
 class FollowersListPendingView(generics.ListAPIView):
     """API view to retrieve a list of pending followers for the authenticated user."""
     permission_classes = (IsAuthenticated,)
-    serializer_class = FollowsSerializer
+    serializer_class = serializers.FollowersSerializer
 
     def get_queryset(self):
         user_id = self.request.user.pk
@@ -74,6 +104,42 @@ class FollowingListView(generics.ListAPIView):
         return queryset
 
 
+class MutualFollowCheckView(APIView):
+    """Api for profile mutual follow check"""
+    permission_classes = (IsAuthenticated,)
+    serializer = serializers.FollowActionSerializer
+
+    @swagger_auto_schema(
+        request_body=serializers.FollowActionSerializer,
+        responses={status.HTTP_200_OK: serializers.FollowActionSerializer},
+    )
+    def post(self, request):
+        serializer = self.serializer(data=request.data)
+        if serializer.is_valid():
+            followee_id = serializer.validated_data['follower_id']
+            try:
+                current_user_follow = Follow.objects.filter(follower_id=self.request.user.id, followee_id=followee_id)
+            except Follow.DoesNotExist:
+                pass
+
+            followee_follow = Follow.objects.filter(follower_id=followee_id, followee_id=self.request.user.id,
+                                                    allowed=True)
+            if current_user_follow.allowed and followee_follow:
+                return Response({'detail': 'Mutual Follow'})
+
+            elif not current_user_follow.allowed:
+                return Response({'detail': 'Pending'})
+
+            elif current_user_follow.allowed:
+                return Response({'detail': 'Followed'})
+
+            if current_user_follow.allowed:
+                return Response({'detail': 'Follow you'})
+
+            else:
+                return Response({'detail': 'Not followed'})
+
+
 class FollowActionView(APIView):
     """API view for performing a follow action on a user profile."""
     primary_serializer = serializers.FollowActionSerializer
@@ -90,6 +156,9 @@ class FollowActionView(APIView):
             followee_id = serializer.validated_data['followee'].pk
             followee = get_object_or_404(User, pk=followee_id)
             follower = request.user
+
+            if followee == follower:
+                return Response({'error': "You can't follow by yourself"})
 
             if Follow.objects.filter(followee=followee, follower=follower).exists():
                 return Response({'error': 'You already followed this user'}, status=status.HTTP_400_BAD_REQUEST)
@@ -158,8 +227,6 @@ class FollowPendingConfirm(APIView):
     def post(self, request):
         serializer = self.primary_serializer(data=request.data)
         if serializer.is_valid():
-            print(serializer.validated_data['follower'].id)
-            print(i.follower.pk for i in Follow.objects.filter(followee=request.user.id, allowed=False))
             follow = get_object_or_404(
                 Follow, followee=request.user.id, follower=serializer.validated_data['follower'].id, allowed=False)
             follow.allowed = True
@@ -358,3 +425,9 @@ class ConfirmEmailUpdateApiView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response({'detail': serializer.error_messages}, status=status.HTTP_404_NOT_FOUND)
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """Takes a set of user credentials and returns an access and refresh JSON web
+    token pair to prove the authentication of those credentials."""
+    serializer_class = serializers.CustomTokenObtainPairSerializer
