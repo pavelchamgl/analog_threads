@@ -1,12 +1,14 @@
 from rest_framework import mixins, status
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework.generics import ListCreateAPIView, get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
-from .models import Post
-from .serializers import PostSerializer, PostCreateSerializer
+from .models import Post, Comment
+from .permissions import CommentPermission
+from .serializers import PostSerializer, PostCreateSerializer, CommentCreateSerializer, CommentViewSerializer
 
 
 class PostModelViewSet(mixins.CreateModelMixin,
@@ -35,7 +37,7 @@ class PostModelViewSet(mixins.CreateModelMixin,
     )
     def create(self, request, *args, **kwargs):
         user = self.request.user
-        request.data["user_id"] = user.id
+        request.data["author"] = user.id
         serializer = PostCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -65,3 +67,37 @@ class PostLikeUnlikeAPIView(APIView):
         elif post.likes.filter(id=user.id).exists():
             post.likes.remove(user.id)
             return Response({'success': 'Like removed.'}, status=status.HTTP_200_OK)
+
+
+class CommentListCreateAPIView(ListCreateAPIView):
+    """
+    API endpoint for comment model instances (List/Create).
+    """
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return CommentViewSerializer
+        elif self.request.method == 'POST':
+            return CommentCreateSerializer
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [IsAuthenticated()]
+        elif self.request.method == 'POST':
+            return [CommentPermission()]
+
+    def get_queryset(self):
+        return Comment.objects.order_by('-date_posted')
+
+    def create(self, request, *args, **kwargs):
+        user = self.request.user
+        request.data['author'] = user.id
+        post_id = self.kwargs['post_id']
+        request.data['post'] = post_id
+        try:
+            post = get_object_or_404(Post, id=post_id)
+        except Post.DoesNotExist:
+            return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response({'message': 'Post added successfully.'}, status=status.HTTP_201_CREATED)
