@@ -1,6 +1,6 @@
 from rest_framework import mixins, status
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.generics import ListCreateAPIView, get_object_or_404
+from rest_framework.generics import ListCreateAPIView, get_object_or_404, CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,7 +8,11 @@ from rest_framework.viewsets import GenericViewSet
 
 from .models import Post, Comment
 from .permissions import CommentPermission
-from .serializers import PostSerializer, PostCreateSerializer, CommentCreateSerializer, CommentViewSerializer
+from .serializers import (PostViewSerializer,
+                          PostCreateSerializer,
+                          CommentCreateSerializer,
+                          CommentViewSerializer,
+                          RepostCreateSerializer)
 
 
 class PostModelViewSet(mixins.CreateModelMixin,
@@ -19,7 +23,7 @@ class PostModelViewSet(mixins.CreateModelMixin,
     """
     API view for user post model instances (List/Retrieve/Destroy).
     """
-    serializer_class = PostSerializer
+    serializer_class = PostViewSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -42,6 +46,25 @@ class PostModelViewSet(mixins.CreateModelMixin,
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'message': 'Post added successfully.'}, status=status.HTTP_201_CREATED)
+
+
+class RepostCreateAPIVIew(CreateAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = self.request.user
+        request.data['author'] = user.id
+        post_id = self.kwargs['post_id']
+        request.data['repost'] = post_id
+
+        try:
+            post = get_object_or_404(Post, id=post_id)
+        except Post.DoesNotExist:
+            return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = RepostCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'message': 'Repost added successfully.'}, status=status.HTTP_201_CREATED)
 
 
 class PostLikeUnlikeAPIView(APIView):

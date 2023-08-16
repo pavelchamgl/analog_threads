@@ -4,14 +4,14 @@ from rest_framework.fields import SerializerMethodField
 from .models import Post, Comment
 
 
-class RepostSerializer(serializers.ModelSerializer):
+class RepostViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = ['id', 'author', 'text', 'date_posted']
+        fields = ['id', 'author', 'text', 'repost', 'date_posted']
 
 
-class PostSerializer(serializers.ModelSerializer):
-    repost = RepostSerializer()
+class PostViewSerializer(serializers.ModelSerializer):
+    repost = RepostViewSerializer()
     total_likes = SerializerMethodField()
     user_like = SerializerMethodField()
 
@@ -30,17 +30,23 @@ class PostCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['author', 'text', 'date_posted', 'repost', 'comments_permission']
+        fields = ['author', 'text', 'comments_permission']
 
 
-class ReplySerializer(serializers.ModelSerializer):
+class RepostCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = ['author', 'repost']
+
+
+class ReplyViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ['id', 'author', 'text', 'date_posted' ]
+        fields = ['id', 'author', 'text', 'date_posted']
 
 
 class CommentViewSerializer(serializers.ModelSerializer):
-    reply = ReplySerializer()
+    reply = ReplyViewSerializer()
     total_likes = SerializerMethodField()
     user_like = SerializerMethodField()
 
