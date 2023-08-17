@@ -1,7 +1,11 @@
 from django.urls import path, include, re_path
 from rest_framework import routers
 
-from .views import PostModelViewSet, PostLikeUnlikeAPIView, CommentListCreateAPIView, RepostCreateAPIVIew
+from .views import (PostModelViewSet,
+                    PostLikeUnlikeAPIView,
+                    CommentListCreateAPIView,
+                    RepostCreateAPIVIew,
+                    QuoteCreateAPIVIew)
 
 
 router = routers.DefaultRouter()
@@ -13,4 +17,5 @@ urlpatterns = [
     re_path('post/like_unlike/(?P<post_id>.+)/', PostLikeUnlikeAPIView.as_view(), name='post_like_unlike'),
     re_path('post/(?P<post_id>.+)/comments/', CommentListCreateAPIView.as_view(), name='comment-list-create'),
     re_path('post/(?P<post_id>.+)/repost/', RepostCreateAPIVIew.as_view(), name='repost_create'),
+    re_path('post/(?P<post_id>.+)/quote/', QuoteCreateAPIVIew.as_view(), name='quote_create'),
 ]
