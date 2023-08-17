@@ -38,6 +38,14 @@ class RepostCreateSerializer(serializers.ModelSerializer):
         fields = ['author', 'repost']
 
 
+class QuoteCreateSerializer(serializers.ModelSerializer):
+    text = serializers.CharField(required=True)
+
+    class Meta:
+        model = Post
+        fields = ['author', 'text', 'repost']
+
+
 class ReplyViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
