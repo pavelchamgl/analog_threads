@@ -51,6 +51,13 @@ class PostModelViewSet(mixins.CreateModelMixin,
 class RepostCreateAPIVIew(CreateAPIView):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="This endpoint for repost.",
+        responses={
+            200: 'Repost added successfully.',
+            404: 'Post not found.'
+        }
+    )
     def post(self, request, *args, **kwargs):
         user = self.request.user
         request.data['author'] = user.id
@@ -89,7 +96,7 @@ class PostLikeUnlikeAPIView(APIView):
             return Response({'message': 'Like added.'}, status=status.HTTP_200_OK)
         elif post.likes.filter(id=user.id).exists():
             post.likes.remove(user.id)
-            return Response({'success': 'Like removed.'}, status=status.HTTP_200_OK)
+            return Response({'message': 'Like removed.'}, status=status.HTTP_200_OK)
 
 
 class CommentListCreateAPIView(ListCreateAPIView):
