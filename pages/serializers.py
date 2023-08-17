@@ -74,3 +74,11 @@ class CommentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ['post', 'author', 'text']
+
+
+class ReplyCreateSerializer(serializers.ModelSerializer):
+    text = serializers.CharField(required=True)
+
+    class Meta:
+        model = Comment
+        fields = ['post', 'author', 'text', 'reply']
