@@ -69,6 +69,8 @@ class CommentViewSerializer(serializers.ModelSerializer):
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):
+    text = serializers.CharField(required=True)
+
     class Meta:
         model = Comment
-        fields = ['id', 'post', 'author', 'text', 'date_posted', 'reply', ]
+        fields = ['post', 'author', 'text']
