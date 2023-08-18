@@ -1,19 +1,23 @@
 from rest_framework import mixins, status
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.generics import ListCreateAPIView, get_object_or_404, CreateAPIView
+from rest_framework.generics import (ListCreateAPIView,
+                                     get_object_or_404,
+                                     CreateAPIView)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
 from .models import Post, Comment
-from .permissions import CommentPermission
+from .permissions import (CommentPermission,
+                          ReplyPermission)
 from .serializers import (PostViewSerializer,
                           PostCreateSerializer,
                           CommentCreateSerializer,
                           CommentViewSerializer,
                           RepostCreateSerializer,
-                          QuoteCreateSerializer)
+                          QuoteCreateSerializer,
+                          ReplyCreateSerializer)
 
 
 class PostModelViewSet(mixins.CreateModelMixin,
@@ -158,4 +162,31 @@ class CommentListCreateAPIView(ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        return Response({'message': 'Post added successfully.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Comment added successfully.'}, status=status.HTTP_201_CREATED)
+
+
+class ReplyCreateAPIView(CreateAPIView):
+    serializer_class = ReplyCreateSerializer
+    permission_classes = [IsAuthenticated, ReplyPermission]
+
+    @swagger_auto_schema(
+        operation_description="This endpoint for reply.",
+        responses={
+            200: 'Reply added successfully.',
+            404: 'Comment not found.'
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        request.data['author'] = request.user.id
+        comment_id = self.kwargs['comment_id']
+
+        try:
+            comment = get_object_or_404(Comment, id=comment_id)
+        except Comment.DoesNotExist:
+            return Response({'error': 'Comment not found.'}, status=status.HTTP_404_NOT_FOUND)
+        request.data['post'] = comment.post.id
+        request.data['reply'] = comment.id
+        serializer = ReplyCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'message': 'Reply added successfully.'}, status=status.HTTP_201_CREATED)
