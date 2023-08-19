@@ -1,4 +1,5 @@
 from django.db.models import Count, Q
+from drf_yasg import openapi
 from rest_framework import mixins, status
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.generics import get_object_or_404
@@ -8,6 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import generics
 
+from config.utils import ThreadsMainPaginatorLTE, ThreadsMainPaginatorInspector
 from users.models import Follow, User
 from . import serializers
 from .models import Post, Comment
@@ -113,13 +115,19 @@ class ForYouFeedView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     model = Post
     serializer_class = serializers.PostSerializer
+    pagination_class = ThreadsMainPaginatorLTE
+    pagination_inspector = ThreadsMainPaginatorInspector
 
     def get_queryset(self):
         user_id = self.request.user.id
         queryset = Post.objects.exclude(
             Q(author__followee__follower_id=user_id) | Q(author=user_id) | Q(author__is_private=True)
-        ).annotate(likes_count=Count('likes')).order_by('-date_posted', '-pk', '-likes_count',)
+        ).annotate(likes_count=Count('likes')).order_by('-date_posted', '-pk', '-likes_count')
         return queryset
+
+    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
 
 class FollowingFeedView(generics.ListAPIView):
@@ -127,6 +135,8 @@ class FollowingFeedView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     model = Post
     serializer_class = serializers.PostSerializer
+    pagination_class = ThreadsMainPaginatorLTE
+    pagination_inspector = ThreadsMainPaginatorInspector
 
     def get_queryset(self):
         user_id = self.request.user.id
@@ -134,3 +144,7 @@ class FollowingFeedView(generics.ListAPIView):
             author__followee__follower_id=user_id, author__followee__allowed=True
         ).order_by('-date_posted', '-pk')
         return queryset
+
+    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
