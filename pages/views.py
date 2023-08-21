@@ -1,3 +1,5 @@
+from django.db.models import Count, Q
+from drf_yasg import openapi
 from rest_framework import mixins, status
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.generics import (ListCreateAPIView,
@@ -7,7 +9,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
+from rest_framework import generics
 
+from config.utils import ThreadsMainPaginatorLTE, ThreadsMainPaginatorInspector
+from users.models import Follow, User
+from . import serializers
 from .models import Post, Comment
 from .permissions import (CommentPermission,
                           ReplyPermission)
@@ -51,6 +57,7 @@ class PostModelViewSet(mixins.CreateModelMixin,
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'message': 'Post added successfully.'}, status=status.HTTP_201_CREATED)
+
 
 
 class RepostCreateAPIVIew(CreateAPIView):
@@ -131,10 +138,11 @@ class PostLikeUnlikeAPIView(APIView):
             return Response({'message': 'Like removed.'}, status=status.HTTP_200_OK)
 
 
-class CommentListCreateAPIView(ListCreateAPIView):
+class CommentListCreateAPIView(generics.ListCreateAPIView):
     """
     API endpoint for comment model instances (List/Create).
     """
+
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return CommentViewSerializer
@@ -164,6 +172,46 @@ class CommentListCreateAPIView(ListCreateAPIView):
         self.perform_create(serializer)
         return Response({'message': 'Comment added successfully.'}, status=status.HTTP_201_CREATED)
 
+
+class ForYouFeedView(generics.ListAPIView):
+    """For You feed page records"""
+    permission_classes = [IsAuthenticated]
+    model = Post
+    serializer_class = serializers.PostSerializer
+    pagination_class = ThreadsMainPaginatorLTE
+    pagination_inspector = ThreadsMainPaginatorInspector
+
+    def get_queryset(self):
+        user_id = self.request.user.id
+        queryset = Post.objects.exclude(
+            Q(author__followee__follower_id=user_id) | Q(author=user_id) | Q(author__is_private=True)
+        ).annotate(likes_count=Count('likes')).order_by('-date_posted', '-pk', '-likes_count')
+        return queryset
+
+    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class FollowingFeedView(generics.ListAPIView):
+    """Following feed page records"""
+    permission_classes = [IsAuthenticated]
+    model = Post
+    serializer_class = serializers.PostSerializer
+    pagination_class = ThreadsMainPaginatorLTE
+    pagination_inspector = ThreadsMainPaginatorInspector
+
+    def get_queryset(self):
+        user_id = self.request.user.id
+        queryset = Post.objects.filter(
+            author__followee__follower_id=user_id, author__followee__allowed=True
+        ).order_by('-date_posted', '-pk')
+        return queryset
+
+    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+        
 
 class ReplyCreateAPIView(CreateAPIView):
     serializer_class = ReplyCreateSerializer

@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from config.utils import ThreadsMainPaginatorInspector, ThreadsMainPaginator
 from users import permissions, serializers
 from users.base_views import BaseOtpView, BaseOTPVerifyView
 from users.models import User, Follow
@@ -75,33 +76,51 @@ class FollowersListView(generics.ListAPIView):
     """API view to retrieve a list of followers for a given user."""
     permission_classes = (permissions.PublicOrPrivateProfilePermission,)
     serializer_class = serializers.FollowersSerializer
+    pagination_class = ThreadsMainPaginator
+    pagination_inspector = ThreadsMainPaginatorInspector
 
     def get_queryset(self):
         followee_id = self.kwargs.get('followee_pk')
         queryset = Follow.objects.filter(followee_id=followee_id, allowed=True)
         return queryset
 
+    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
 
 class FollowersListPendingView(generics.ListAPIView):
     """API view to retrieve a list of pending followers for the authenticated user."""
     permission_classes = (IsAuthenticated,)
     serializer_class = serializers.FollowersSerializer
+    pagination_class = ThreadsMainPaginator
+    pagination_inspector = ThreadsMainPaginatorInspector
 
     def get_queryset(self):
         user_id = self.request.user.pk
         queryset = Follow.objects.filter(followee_id=user_id, allowed=False)
         return queryset
 
+    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
 
 class FollowingListView(generics.ListAPIView):
     """API view to retrieve a list of users followed by a given follower."""
     permission_classes = (permissions.PublicOrPrivateProfilePermission,)
     serializer_class = serializers.FollowsSerializer
+    pagination_class = ThreadsMainPaginator
+    pagination_inspector = ThreadsMainPaginatorInspector
 
     def get_queryset(self):
         user_id = self.kwargs.get('follower_pk')
         queryset = Follow.objects.filter(follower_id=user_id, allowed=True)
         return queryset
+
+    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
 
 class MutualFollowCheckView(APIView):
