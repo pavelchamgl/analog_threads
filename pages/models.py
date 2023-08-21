@@ -31,9 +31,10 @@ class Post(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-        mentioned_usernames = re.findall(r'@(\w+)', self.text)
-        mentioned_users = User.objects.filter(username__in=mentioned_usernames)
-        self.mentioned_users.set(mentioned_users)
+        if self.text:
+            mentioned_usernames = re.findall(r'@(\w+)', self.text)
+            mentioned_users = User.objects.filter(username__in=mentioned_usernames)
+            self.mentioned_users.set(mentioned_users)
 
 
 class Comment(models.Model):
