@@ -59,7 +59,6 @@ class PostModelViewSet(mixins.CreateModelMixin,
         return Response({'message': 'Post added successfully.'}, status=status.HTTP_201_CREATED)
 
 
-
 class RepostCreateAPIVIew(CreateAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -172,47 +171,6 @@ class CommentListCreateAPIView(generics.ListCreateAPIView):
         self.perform_create(serializer)
         return Response({'message': 'Comment added successfully.'}, status=status.HTTP_201_CREATED)
 
-
-class ForYouFeedView(generics.ListAPIView):
-    """For You feed page records"""
-    permission_classes = [IsAuthenticated]
-    model = Post
-    serializer_class = serializers.PostSerializer
-    pagination_class = ThreadsMainPaginatorLTE
-    pagination_inspector = ThreadsMainPaginatorInspector
-
-    def get_queryset(self):
-        user_id = self.request.user.id
-        queryset = Post.objects.exclude(
-            Q(author__followee__follower_id=user_id) | Q(author=user_id) | Q(author__is_private=True)
-        ).annotate(likes_count=Count('likes')).order_by('-date_posted', '-pk', '-likes_count')
-        return queryset
-
-    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-
-class FollowingFeedView(generics.ListAPIView):
-    """Following feed page records"""
-    permission_classes = [IsAuthenticated]
-    model = Post
-    serializer_class = serializers.PostSerializer
-    pagination_class = ThreadsMainPaginatorLTE
-    pagination_inspector = ThreadsMainPaginatorInspector
-
-    def get_queryset(self):
-        user_id = self.request.user.id
-        queryset = Post.objects.filter(
-            author__followee__follower_id=user_id, author__followee__allowed=True
-        ).order_by('-date_posted', '-pk')
-        return queryset
-
-    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-        
-
 class ReplyCreateAPIView(CreateAPIView):
     serializer_class = ReplyCreateSerializer
     permission_classes = [IsAuthenticated, ReplyPermission]
@@ -238,3 +196,43 @@ class ReplyCreateAPIView(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'message': 'Reply added successfully.'}, status=status.HTTP_201_CREATED)
+
+
+class ForYouFeedView(generics.ListAPIView):
+    """For You feed page records"""
+    permission_classes = [IsAuthenticated]
+    model = Post
+    serializer_class = serializers.PostViewSerializer
+    pagination_class = ThreadsMainPaginatorLTE
+    pagination_inspector = ThreadsMainPaginatorInspector
+
+    def get_queryset(self):
+        user_id = self.request.user.id
+        queryset = Post.objects.exclude(
+            Q(author__followee__follower_id=user_id) | Q(author=user_id) | Q(author__is_private=True)
+        ).annotate(likes_count=Count('likes')).order_by('-date_posted', '-pk', '-likes_count')
+        return queryset
+
+    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
+class FollowingFeedView(generics.ListAPIView):
+    """Following feed page records"""
+    permission_classes = [IsAuthenticated]
+    model = Post
+    serializer_class = serializers.PostViewSerializer
+    pagination_class = ThreadsMainPaginatorLTE
+    pagination_inspector = ThreadsMainPaginatorInspector
+
+    def get_queryset(self):
+        user_id = self.request.user.id
+        queryset = Post.objects.filter(
+            author__followee__follower_id=user_id, author__followee__allowed=True
+        ).order_by('-date_posted', '-pk')
+        return queryset
+
+    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
