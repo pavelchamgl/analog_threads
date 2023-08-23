@@ -1,5 +1,4 @@
 from django.db.models import Count, Q
-from drf_yasg import openapi
 from rest_framework import mixins, status
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.generics import (ListCreateAPIView,
@@ -12,8 +11,6 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework import generics
 
 from config.utils import ThreadsMainPaginatorLTE, ThreadsMainPaginatorInspector
-from users.models import Follow, User
-from . import serializers
 from .models import Post, Comment
 from .permissions import (CommentPermission,
                           ReplyPermission)
@@ -137,7 +134,7 @@ class PostLikeUnlikeAPIView(APIView):
             return Response({'message': 'Like removed.'}, status=status.HTTP_200_OK)
 
 
-class CommentListCreateAPIView(generics.ListCreateAPIView):
+class CommentListCreateAPIView(ListCreateAPIView):
     """
     API endpoint for comment model instances (List/Create).
     """
@@ -171,6 +168,7 @@ class CommentListCreateAPIView(generics.ListCreateAPIView):
         self.perform_create(serializer)
         return Response({'message': 'Comment added successfully.'}, status=status.HTTP_201_CREATED)
 
+
 class ReplyCreateAPIView(CreateAPIView):
     serializer_class = ReplyCreateSerializer
     permission_classes = [IsAuthenticated, ReplyPermission]
@@ -202,7 +200,7 @@ class ForYouFeedView(generics.ListAPIView):
     """For You feed page records"""
     permission_classes = [IsAuthenticated]
     model = Post
-    serializer_class = serializers.PostViewSerializer
+    serializer_class = PostViewSerializer
     pagination_class = ThreadsMainPaginatorLTE
     pagination_inspector = ThreadsMainPaginatorInspector
 
@@ -222,7 +220,7 @@ class FollowingFeedView(generics.ListAPIView):
     """Following feed page records"""
     permission_classes = [IsAuthenticated]
     model = Post
-    serializer_class = serializers.PostViewSerializer
+    serializer_class = PostViewSerializer
     pagination_class = ThreadsMainPaginatorLTE
     pagination_inspector = ThreadsMainPaginatorInspector
 
