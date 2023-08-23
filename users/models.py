@@ -1,5 +1,5 @@
 from django.contrib.auth.base_user import BaseUserManager
-from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
@@ -24,14 +24,12 @@ class CustomUserManager(BaseUserManager):
 
 class User(AbstractUser):
     username = models.CharField(max_length=32, unique=True)
-    first_name = models.CharField(max_length=32, blank=True, null=True)
-    last_name = models.CharField(max_length=32, blank=True, null=True)
+    full_name = models.CharField(max_length=50, blank=True, null=True)
     email = models.EmailField(unique=True)
-    photo = models.ImageField(upload_to="", blank=True, null=True)
+    #photo = models.ImageField(upload_to="", blank=True, null=True)
     bio = models.CharField(max_length=254, blank=True, null=True)
     website = models.URLField(max_length=124, blank=True, null=True)
     location = models.CharField(max_length=200, blank=True, null=True)
-    # link=?
     is_email_verify = models.BooleanField(default=False)
     is_private = models.BooleanField(default=False)
 
