@@ -15,7 +15,8 @@ class Post(models.Model):
 
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.CharField(max_length=1024, blank=True, null=True)
-    # image = models.ImageField(upload_to="")
+    image = models.URLField(blank=True, null=True)
+    video = models.URLField(blank=True, null=True)
     date_posted = models.DateTimeField(auto_now_add=True)
     repost = models.ForeignKey("self", on_delete=models.CASCADE, blank=True, null=True)
     comments_permission = models.CharField(max_length=20, choices=comments_permissions_type)
