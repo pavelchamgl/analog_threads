@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import generics
+from cloudinary.uploader import upload
 
 from config.utils import ThreadsMainPaginatorLTE, ThreadsMainPaginatorInspector
 from .models import Post, Comment
@@ -49,11 +50,64 @@ class PostModelViewSet(mixins.CreateModelMixin,
     )
     def create(self, request, *args, **kwargs):
         user = self.request.user
-        request.data["author"] = user.id
+        request.data['author'] = user.id
+
+        image = request.FILES.get('image')
+        video = request.FILES.get('video')
+
+        image_allowed_formats = ['image/png', 'image/jpeg', 'image/gif', 'video/mp4']
+        image_max_file_size = {
+            'image/png': 3 * 1024 * 1024,  # 3 MB
+            'image/jpeg': 3 * 1024 * 1024,  # 3 MB
+            'image/gif': 15 * 1024 * 1024,  # 15 MB
+        }
+
+        video_allowed_formats = ['video/mp4']
+        video_max_file_size = {'video/mp4': 15 * 1024 * 1024}  # 15 MB
+
+        if image and not video:
+            if image.content_type not in image_allowed_formats:
+                return Response({'message': 'Invalid image format. Only PNG, JPEG, and GIF formats are allowed.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            if image.size > image_max_file_size.get(image.content_type, 0):
+                return Response({'message': 'File size should be within PNG/JPG- 3 MB and GIF - 15 MB.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            image_response = upload(image,
+                                    folder="image/",
+                                    transformation=[
+                                        {"width": "auto", "crop": "scale"},
+                                        {'quality': "auto:best"},
+                                        {'fetch_format': "auto"}
+                                    ],
+                                    resource_type='auto')
+            request.data['image'] = image_response['secure_url']
+        elif video and not image:
+            if video.content_type not in video_allowed_formats:
+                return Response({'message': 'Invalid video format. Only MP4 format are allowed.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            if video.size > video_max_file_size.get(video.content_type, 0):
+                return Response({'message': 'File size should be within MP4 - 15 MB.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            video_response = upload(video,
+                                    folder="video/",
+                                    transformation=[
+                                        {"width": "auto", "crop": "scale"},
+                                        {'quality': "auto:best"},
+                                        {'fetch_format': "auto"}
+                                    ],
+                                    resource_type='auto')
+            request.data['video'] = video_response['secure_url']
+        elif image and video:
+            return Response({'message': 'You can\'t provide both an image and a video. Choose one.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         serializer = PostCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({'message': 'Post added successfully.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Post added successfully.'},
+                        status=status.HTTP_201_CREATED)
 
 
 class RepostCreateAPIVIew(CreateAPIView):
