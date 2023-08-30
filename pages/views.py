@@ -11,7 +11,9 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework import generics
 from cloudinary.uploader import upload
 
-from config.utils import ThreadsMainPaginatorLTE, ThreadsMainPaginatorInspector
+from config.utils import ThreadsMainPaginatorLTE, ThreadsMainPaginatorInspector, ThreadsMainPaginator
+from users.models import User
+from . import serializers
 from .models import Post, Comment
 from .permissions import (CommentPermission,
                           ReplyPermission)
@@ -288,3 +290,24 @@ class FollowingFeedView(generics.ListAPIView):
     @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class UsersSearchView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    model = User
+    serializer_class = serializers.UserSearchSerializer
+    pagination_class = ThreadsMainPaginator
+    pagination_inspector = ThreadsMainPaginatorInspector
+
+    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
+    def get(self, request, username, *args, **kwargs):
+        queryset = User.objects.filter(username__icontains=username)
+        paginator = ThreadsMainPaginator()
+        result_page = paginator.paginate_queryset(queryset, request)
+        serializer = self.serializer_class(result_page, many=True, context=self.get_serializer_context())
+        return paginator.get_paginated_response(serializer.data)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
