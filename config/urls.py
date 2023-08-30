@@ -1,5 +1,3 @@
-from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from drf_yasg import openapi
@@ -27,6 +25,6 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('dj-rest-auth/', include('dj_rest_auth.urls')),
 
-    path('api/v1/', include("users.urls")),
-    path('api/v1/', include("pages.urls")),
+    path('', include("users.urls")),
+    path('', include("pages.urls")),
 ]
