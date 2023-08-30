@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
@@ -244,6 +246,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         remember_me = self.context['request'].data.get('remember_me')
         if remember_me:
-            refresh_token = data['refresh']
-            self.context['request'].set_cookie('refresh_token', refresh_token, httponly=True, max_age=3600 * 24 * 7)
+            refresh = self.get_token(self.user)
+            refresh.set_exp(lifetime=timedelta(days=30))  # Set the refresh token lifetime to 30 days
+            data['refresh'] = str(refresh)
         return data
