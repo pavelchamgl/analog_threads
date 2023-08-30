@@ -7,7 +7,7 @@ from .models import Post, Comment
 class RepostViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = ['id', 'author', 'text', 'repost', 'date_posted']
+        fields = ['id', 'author', 'text', 'image', 'video', 'repost', 'date_posted']
 
 
 class PostViewSerializer(serializers.ModelSerializer):
@@ -23,13 +23,13 @@ class PostViewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'text', 'date_posted', 'repost', 'comments_permission', 'total_likes', 'user_like']
+        fields = ['id', 'author', 'text', 'date_posted', 'image', 'video', 'repost', 'comments_permission', 'total_likes', 'user_like']
 
 
 class PostCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = ['author', 'text', 'comments_permission']
+        fields = ['author', 'text', 'image', 'video', 'comments_permission']
 
 
 class RepostCreateSerializer(serializers.ModelSerializer):
