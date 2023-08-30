@@ -17,4 +17,6 @@ urlpatterns = [
 
     path('feed/for_you/', views.ForYouFeedView.as_view(), name='for_you_feed'),
     path('feed/following/', views.FollowingFeedView.as_view(), name='following_feed'),
+
+    path('search/users/<str:username>/', views.UsersSearchView().as_view(), name='search_view'),
 ]

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
+from users.models import User, Follow
 from .models import Post, Comment
 
 
@@ -23,7 +24,8 @@ class PostViewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'text', 'date_posted', 'image', 'video', 'repost', 'comments_permission', 'total_likes', 'user_like']
+        fields = ['id', 'author', 'text', 'date_posted', 'image', 'video', 'repost', 'comments_permission',
+                  'total_likes', 'user_like']
 
 
 class PostCreateSerializer(serializers.ModelSerializer):
@@ -82,3 +84,23 @@ class ReplyCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ['post', 'author', 'text', 'reply']
+
+
+class UserSearchSerializer(serializers.ModelSerializer):
+    is_followed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['pk', 'username', 'is_followed']
+
+    def get_is_followed(self, obj):
+        user_id = self.context['request'].user.id
+        followee_id = obj.id
+
+        if user_id == followee_id:
+            return "You"
+        try:
+            follow = Follow.objects.get(followee_id=followee_id, follower_id=user_id)
+        except Follow.DoesNotExist:
+            return "Not Followed"
+        return "Followed" if follow.allowed else "Pending"
