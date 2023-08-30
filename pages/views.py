@@ -55,7 +55,7 @@ class PostModelViewSet(mixins.CreateModelMixin,
         image = request.FILES.get('image')
         video = request.FILES.get('video')
 
-        image_allowed_formats = ['image/png', 'image/jpeg', 'image/gif', 'video/mp4']
+        image_allowed_formats = ['image/png', 'image/jpeg', 'image/gif']
         image_max_file_size = {
             'image/png': 3 * 1024 * 1024,  # 3 MB
             'image/jpeg': 3 * 1024 * 1024,  # 3 MB

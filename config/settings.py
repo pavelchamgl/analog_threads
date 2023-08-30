@@ -197,7 +197,6 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# CLOUDINARY_URL = os.environ['CLOUDINARY_URL']
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ['CLOUD_NAME'],
     'API_KEY': os.environ['API_KEY'],
