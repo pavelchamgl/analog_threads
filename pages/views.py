@@ -198,7 +198,7 @@ class PostLikeUnlikeAPIView(APIView):
 
 
 class CommentListCreateAPIView(ListCreateAPIView):
-    pagination_class = ThreadsMainPaginatorLTE
+    pagination_class = ThreadsMainPaginator
     pagination_inspector = ThreadsMainPaginatorInspector
     """
     API endpoint for comment model instances (List/Create).
