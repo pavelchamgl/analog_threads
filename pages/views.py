@@ -36,6 +36,8 @@ class PostModelViewSet(mixins.CreateModelMixin,
     """
     serializer_class = PostViewSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = ThreadsMainPaginator
+    pagination_inspector = ThreadsMainPaginatorInspector
 
     def get_queryset(self):
         user_id = self.request.user.id
@@ -111,9 +113,14 @@ class PostModelViewSet(mixins.CreateModelMixin,
         return Response({'message': 'Post added successfully.'},
                         status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
 
 class RepostCreateAPIVIew(CreateAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = RepostCreateSerializer
 
     @swagger_auto_schema(
         operation_description="This endpoint for repost.",
@@ -132,7 +139,7 @@ class RepostCreateAPIVIew(CreateAPIView):
             post = get_object_or_404(Post, id=post_id)
         except Post.DoesNotExist:
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = RepostCreateSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'message': 'Repost added successfully.'}, status=status.HTTP_201_CREATED)
@@ -191,6 +198,8 @@ class PostLikeUnlikeAPIView(APIView):
 
 
 class CommentListCreateAPIView(ListCreateAPIView):
+    pagination_class = ThreadsMainPaginator
+    pagination_inspector = ThreadsMainPaginatorInspector
     """
     API endpoint for comment model instances (List/Create).
     """
@@ -223,6 +232,10 @@ class CommentListCreateAPIView(ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return Response({'message': 'Comment added successfully.'}, status=status.HTTP_201_CREATED)
+
+    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
 
 class ReplyCreateAPIView(CreateAPIView):
