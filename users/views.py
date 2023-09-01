@@ -135,7 +135,9 @@ class MutualFollowCheckView(APIView):
     def post(self, request):
         serializer = self.serializer(data=request.data)
         if serializer.is_valid():
-            followee_id = serializer.validated_data['follower_id']
+            followee_id = serializer.validated_data['followee']
+            if request.user.id == followee_id:
+                return Response({'detail': 'Not followed'})
             try:
                 current_user_follow = Follow.objects.filter(follower_id=self.request.user.id, followee_id=followee_id)
             except Follow.DoesNotExist:
@@ -143,20 +145,22 @@ class MutualFollowCheckView(APIView):
 
             followee_follow = Follow.objects.filter(follower_id=followee_id, followee_id=self.request.user.id,
                                                     allowed=True)
-            if current_user_follow.allowed and followee_follow:
-                return Response({'detail': 'Mutual Follow'})
+            if current_user_follow.exists():
+                if current_user_follow.allowed and followee_follow:
+                    return Response({'detail': 'Mutual Follow'})
 
-            elif not current_user_follow.allowed:
-                return Response({'detail': 'Pending'})
+                elif not current_user_follow.allowed:
+                    return Response({'detail': 'Pending'})
 
-            elif current_user_follow.allowed:
-                return Response({'detail': 'Followed'})
+                elif current_user_follow.allowed:
+                    return Response({'detail': 'Followed'})
 
-            if current_user_follow.allowed:
-                return Response({'detail': 'Follow you'})
-
+                if current_user_follow.allowed:
+                    return Response({'detail': 'Follow you'})
             else:
                 return Response({'detail': 'Not followed'})
+        else:
+            return Response({'detail': "User does not exist"})
 
 
 class FollowActionView(APIView):
