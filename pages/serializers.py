@@ -6,12 +6,14 @@ from .models import Post, Comment
 
 
 class RepostViewSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(read_only=True)
     class Meta:
         model = Post
         fields = ['id', 'author', 'text', 'image', 'video', 'repost', 'date_posted']
 
 
 class PostViewSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(read_only=True)
     repost = RepostViewSerializer()
     total_likes = SerializerMethodField()
     user_like = SerializerMethodField()
@@ -29,18 +31,23 @@ class PostViewSerializer(serializers.ModelSerializer):
 
 
 class PostCreateSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(read_only=True)
+
     class Meta:
         model = Post
         fields = ['author', 'text', 'image', 'video', 'comments_permission']
 
 
 class RepostCreateSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(read_only=True)
+
     class Meta:
         model = Post
         fields = ['author', 'repost']
 
 
 class QuoteCreateSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(read_only=True)
     text = serializers.CharField(required=True)
 
     class Meta:
@@ -49,12 +56,15 @@ class QuoteCreateSerializer(serializers.ModelSerializer):
 
 
 class ReplyViewSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(read_only=True)
+
     class Meta:
         model = Comment
         fields = ['id', 'author', 'text', 'date_posted']
 
 
 class CommentViewSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(read_only=True)
     reply = ReplyViewSerializer()
     total_likes = SerializerMethodField()
     user_like = SerializerMethodField()
@@ -71,6 +81,7 @@ class CommentViewSerializer(serializers.ModelSerializer):
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(read_only=True)
     text = serializers.CharField(required=True)
 
     class Meta:
@@ -79,6 +90,7 @@ class CommentCreateSerializer(serializers.ModelSerializer):
 
 
 class ReplyCreateSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(read_only=True)
     text = serializers.CharField(required=True)
 
     class Meta:
