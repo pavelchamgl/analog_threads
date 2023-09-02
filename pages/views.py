@@ -13,6 +13,7 @@ from cloudinary.uploader import upload
 
 from config.utils import ThreadsMainPaginatorLTE, ThreadsMainPaginatorInspector, ThreadsMainPaginator
 from users.models import User
+from users.permissions import EmailVerified
 from . import serializers
 from .base_views import BaseSearchView
 from .models import Post, Comment, HashTag
@@ -36,7 +37,7 @@ class PostModelViewSet(mixins.CreateModelMixin,
     API view for user post model instances (List/Retrieve/Destroy).
     """
     serializer_class = PostViewSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, EmailVerified)
     pagination_class = ThreadsMainPaginator
     pagination_inspector = ThreadsMainPaginatorInspector
 
@@ -117,7 +118,7 @@ class PostModelViewSet(mixins.CreateModelMixin,
 
 
 class RepostCreateAPIVIew(CreateAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, EmailVerified)
     serializer_class = RepostCreateSerializer
 
     @swagger_auto_schema(
@@ -142,7 +143,7 @@ class RepostCreateAPIVIew(CreateAPIView):
 
 
 class QuoteCreateAPIVIew(CreateAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, EmailVerified)
     serializer_class = QuoteCreateSerializer
 
     @swagger_auto_schema(
@@ -167,7 +168,7 @@ class QuoteCreateAPIVIew(CreateAPIView):
 
 
 class PostLikeUnlikeAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, EmailVerified)
 
     @swagger_auto_schema(
         operation_description="This endpoint like/unlike post.",
@@ -192,6 +193,7 @@ class PostLikeUnlikeAPIView(APIView):
 
 
 class CommentListCreateAPIView(ListCreateAPIView):
+    permission_classes = (IsAuthenticated, EmailVerified)
     pagination_class = ThreadsMainPaginator
     pagination_inspector = ThreadsMainPaginatorInspector
     """
@@ -232,7 +234,7 @@ class CommentListCreateAPIView(ListCreateAPIView):
 
 class ReplyCreateAPIView(CreateAPIView):
     serializer_class = ReplyCreateSerializer
-    permission_classes = [IsAuthenticated, ReplyPermission]
+    permission_classes = (IsAuthenticated, EmailVerified, ReplyPermission)
 
     @swagger_auto_schema(
         operation_description="This endpoint for reply.",
@@ -257,7 +259,7 @@ class ReplyCreateAPIView(CreateAPIView):
 
 
 class PostsByHashTagView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, EmailVerified)
     model = HashTag
     serializer_class = PostViewSerializer
     pagination_class = ThreadsMainPaginatorLTE
@@ -276,7 +278,7 @@ class PostsByHashTagView(generics.ListAPIView):
 
 class ForYouFeedView(generics.ListAPIView):
     """For You feed page records"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, EmailVerified)
     model = Post
     serializer_class = PostViewSerializer
     pagination_class = ThreadsMainPaginatorLTE
@@ -298,7 +300,7 @@ class FollowingFeedView(generics.ListAPIView):
     """
     Following feed page records
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, EmailVerified)
     model = Post
     serializer_class = PostViewSerializer
     pagination_class = ThreadsMainPaginatorLTE
@@ -320,6 +322,7 @@ class UsersSearchView(BaseSearchView):
     """
     Search view for users by username
     """
+    permission_classes = (IsAuthenticated, EmailVerified)
     model = User
     serializer_class = serializers.UserSearchSerializer
 
@@ -333,6 +336,7 @@ class HashTagsSearch(BaseSearchView):
     """
     Search view for hashtags
     """
+    permission_classes = (IsAuthenticated, EmailVerified)
     model = HashTag
     serializer_class = serializers.HashTagSearchSerializer
 

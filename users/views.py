@@ -28,7 +28,7 @@ class TestView(APIView):
 class SelfUserView(generics.RetrieveAPIView):
     model = User
     permission_classes = (IsAuthenticated,)
-    serializer_class = serializers.UserProfileDataSerializer
+    serializer_class = serializers.SelfUserProfileSerializer
 
     def get_object(self):
         return self.request.user
@@ -41,28 +41,28 @@ class SelfUserView(generics.RetrieveAPIView):
 class UserCreateApiView(generics.CreateAPIView):
     """API view for creating new user model instances."""
     queryset = User.objects.all()
-    permission_classes = (permissions.NotAuthenticate,)
+    permission_classes = (permissions.NotAuthenticate, permissions.EmailVerified)
     serializer_class = serializers.SignUpSerializer
 
 
 class UserProfileViewByPK(generics.RetrieveAPIView):
     """API view to retrieve user profile data by id."""
     queryset = User.objects.all()
-    permission_classes = (AllowAny,)
+    permission_classes = (AllowAny, permissions.EmailVerified)
     serializer_class = serializers.UserProfileDataSerializer
 
 
 class UserProfileViewByUsername(generics.RetrieveAPIView):
     """API view to retrieve user profile data by username."""
     queryset = User.objects.all()
-    permission_classes = (AllowAny,)
+    permission_classes = (AllowAny, permissions.EmailVerified)
     serializer_class = serializers.UserProfileDataSerializer
     lookup_field = 'username'
 
 
 class UserProfileUpdateView(generics.UpdateAPIView):
     """API view to update user profile data."""
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, permissions.EmailVerified)
     serializer_class = serializers.UserProfileDataSerializer
 
     def get_object(self):
@@ -87,7 +87,7 @@ class GoogleLoginView(SocialLoginView):
 
 class FollowersListView(generics.ListAPIView):
     """API view to retrieve a list of followers for a given user."""
-    permission_classes = (permissions.PublicOrPrivateProfilePermission,)
+    permission_classes = (IsAuthenticated, permissions.EmailVerified, permissions.PublicOrPrivateProfilePermission)
     serializer_class = serializers.FollowersSerializer
     pagination_class = ThreadsMainPaginator
     pagination_inspector = ThreadsMainPaginatorInspector
@@ -104,7 +104,7 @@ class FollowersListView(generics.ListAPIView):
 
 class FollowersListPendingView(generics.ListAPIView):
     """API view to retrieve a list of pending followers for the authenticated user."""
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, permissions.EmailVerified)
     serializer_class = serializers.FollowersSerializer
     pagination_class = ThreadsMainPaginator
     pagination_inspector = ThreadsMainPaginatorInspector
@@ -121,7 +121,7 @@ class FollowersListPendingView(generics.ListAPIView):
 
 class FollowingListView(generics.ListAPIView):
     """API view to retrieve a list of users followed by a given follower."""
-    permission_classes = (permissions.PublicOrPrivateProfilePermission,)
+    permission_classes = (IsAuthenticated, permissions.EmailVerified, permissions.PublicOrPrivateProfilePermission)
     serializer_class = serializers.FollowsSerializer
     pagination_class = ThreadsMainPaginator
     pagination_inspector = ThreadsMainPaginatorInspector
@@ -138,7 +138,7 @@ class FollowingListView(generics.ListAPIView):
 
 class MutualFollowCheckView(APIView):
     """Api for profile mutual follow check"""
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, permissions.EmailVerified)
     serializer = serializers.FollowActionSerializer
 
     @swagger_auto_schema(
@@ -180,7 +180,7 @@ class FollowActionView(APIView):
     """API view for performing a follow action on a user profile."""
     primary_serializer = serializers.FollowActionSerializer
     secondary_serializer = serializers.MutualFollowSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, permissions.EmailVerified)
 
     @swagger_auto_schema(
         request_body=serializers.FollowActionSerializer,
@@ -211,7 +211,7 @@ class FollowActionView(APIView):
 class UnfollowActionView(APIView):
     """API view for performing an unfollow action on a user profile."""
     serializer = serializers.FollowActionSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, permissions.EmailVerified)
 
     @swagger_auto_schema(
         request_body=serializers.FollowActionSerializer,
@@ -232,7 +232,7 @@ class UnfollowActionView(APIView):
 class DeleteFollowerView(APIView):
     """API view for deleting a follower from the authenticated user's followers list."""
     serializer = serializers.FollowPendingSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, permissions.EmailVerified)
 
     @swagger_auto_schema(
         request_body=serializers.FollowPendingSerializer,
@@ -254,7 +254,7 @@ class FollowPendingConfirm(APIView):
     """API view for confirming pending follow requests."""
     primary_serializer = serializers.FollowPendingSerializer
     secondary_serializer = serializers.MutualFollowSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, permissions.EmailVerified)
 
     @swagger_auto_schema(
         request_body=serializers.FollowPendingSerializer,
@@ -278,7 +278,7 @@ class FollowPendingConfirm(APIView):
 class FollowPendingDecline(APIView):
     """API view for declining pending follow requests."""
     serializer = serializers.FollowPendingSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, permissions.EmailVerified)
 
     @swagger_auto_schema(
         request_body=serializers.FollowPendingSerializer,
@@ -341,7 +341,7 @@ class LogoutView(APIView):
 
 class ForgotPasswordApiView(BaseOtpView):
     """API view for sending password recovery OTP to users."""
-    permission_classes = [AllowAny]
+    permission_classes = (AllowAny,)
     serializer = serializers.ForgotPasswordMessageSendSerializer
 
     subject = "Password Recovery"
@@ -351,7 +351,7 @@ class ForgotPasswordApiView(BaseOtpView):
 
 class ConfirmEmailView(BaseOtpView):
     """API view for sending email confirmation one-time passwords (OTP)."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, permissions.EmailVerified)
     serializer = serializers.ConfirmEmailMessageSendSerializer
 
     subject = "Email Confirmation"
@@ -370,14 +370,14 @@ class ForgotPasswordOTPVerifyView(BaseOTPVerifyView):
 class ConfirmEmailOTPVerifyView(BaseOTPVerifyView):
     """API view for verifying the one-time password (OTP) during the password recovery process."""
     serializer = serializers.OTPSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, permissions.EmailVerified)
 
     otp_title = "EmailConfirmation"
 
 
 class ForgotPasswordUpdateApiView(APIView):
     """API view for updating a user's forgotten password."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, permissions.EmailVerified)
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -422,7 +422,7 @@ class ForgotPasswordUpdateApiView(APIView):
 
 class ConfirmEmailUpdateApiView(APIView):
     """API view for updating email confirmation status."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated, permissions.EmailVerified)
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
