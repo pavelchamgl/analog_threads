@@ -497,3 +497,21 @@ class UserProfilePhotoUpdateAPIView(APIView):
         serializer.save()
         return Response({'message': 'Photo edited successfully.'},
                         status=status.HTTP_201_CREATED)
+
+
+class UserProfilePhotoDestroyAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="This endpoint delete user profile photo.",
+        responses={
+            204: 'Photo deleted successfully.',
+            400: 'Bad Request.'
+        }
+    )
+    def delete(self, request):
+        user = User.objects.get(id=request.user.id)
+        user.photo = None
+        user.save()
+        return Response({'message': 'Photo deleted successfully.'},
+                        status=status.HTTP_204_NO_CONTENT)
