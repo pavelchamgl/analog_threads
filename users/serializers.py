@@ -16,7 +16,7 @@ from users.utils import send_email, otp_update_or_create
 
 class SelfUserProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        models = User
+        model = User
         fields = ['pk', 'username', 'full_name', 'bio', 'website', 'location', 'photo', 'is_email_verify']
 
 
