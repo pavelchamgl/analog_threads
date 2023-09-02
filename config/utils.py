@@ -44,7 +44,7 @@ class ThreadsMainPaginator(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 100
-    selected_id = 1
+    selected_id = None
     selected_id_query_param = 'selected_id'
     lookup = 'id__gte'
 
