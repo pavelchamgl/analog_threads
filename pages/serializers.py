@@ -120,7 +120,12 @@ class UserSearchSerializer(serializers.ModelSerializer):
 
 
 class HashTagSearchSerializer(serializers.ModelSerializer):
+    posts_counts = serializers.SerializerMethodField()
 
     class Meta:
         model = HashTag
-        fields = ['pk', 'tag_name']
+        fields = ['pk', 'tag_name', 'posts_counts']
+
+    def get_posts_counts(self, obj):
+        return obj.hash_tag_in_posts.all().count()
+
