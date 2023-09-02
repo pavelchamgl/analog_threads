@@ -25,6 +25,19 @@ class TestView(APIView):
         return Response({'ok': f'You authenticated! {self.request.user}'})
 
 
+class SelfUserView(generics.RetrieveAPIView):
+    model = User
+    permission_classes = (IsAuthenticated,)
+    serializer_class = serializers.UserProfileDataSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    def get_queryset(self):
+        queryset = User.objects.get(pk=self.request.user.pk)
+        return queryset
+
+
 class UserCreateApiView(generics.CreateAPIView):
     """API view for creating new user model instances."""
     queryset = User.objects.all()
