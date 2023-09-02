@@ -2,11 +2,12 @@ from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
 from users.models import User, Follow
-from .models import Post, Comment
+from .models import Post, Comment, HashTag
 
 
 class RepostViewSerializer(serializers.ModelSerializer):
     author = serializers.HiddenField(default=serializers.CurrentUserDefault(), write_only=True)
+
     class Meta:
         model = Post
         fields = ['id', 'author', 'text', 'image', 'video', 'repost', 'date_posted']
@@ -117,3 +118,10 @@ class UserSearchSerializer(serializers.ModelSerializer):
         except Follow.DoesNotExist:
             return "Not Followed"
         return "Followed" if follow.allowed else "Pending"
+
+
+class HashTagSearchSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = HashTag
+        fields = ['pk', 'tag_name']
