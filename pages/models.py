@@ -43,7 +43,7 @@ class Post(models.Model):
             mentioned_users = User.objects.filter(username__in=mentioned_usernames)
             self.mentioned_users.set(mentioned_users)
 
-            hash_tag_list = re.findall(r'#\w+', self.text)
+            hash_tag_list = re.findall(r'#(\w+)', self.text)
             self.add_hashtags(hash_tag_list)
 
 
