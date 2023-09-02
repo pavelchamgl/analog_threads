@@ -27,7 +27,7 @@ class UserProfileDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['pk', 'username', 'bio', 'website', 'location', 'photo']
+        fields = ['pk', 'username', 'full_name', 'bio', 'website', 'location', 'photo']
 
 
 class FollowersSerializer(serializers.ModelSerializer):
