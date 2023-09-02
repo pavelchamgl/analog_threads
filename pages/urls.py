@@ -18,5 +18,6 @@ urlpatterns = [
     path('feed/for_you/', views.ForYouFeedView.as_view(), name='for_you_feed'),
     path('feed/following/', views.FollowingFeedView.as_view(), name='following_feed'),
 
-    path('search/users/<str:username>/', views.UsersSearchView().as_view(), name='search_view'),
+    path('search/users/<str:search_obj>/', views.UsersSearchView().as_view(), name='username_search_view'),
+    path('search/hashtag/<str:search_obj>/', views.HashTagsSearch().as_view(), name='hashtag_search_view'),
 ]

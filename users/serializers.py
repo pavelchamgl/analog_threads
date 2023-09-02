@@ -1,3 +1,4 @@
+import random
 from datetime import timedelta
 
 from django.utils import timezone
@@ -5,10 +6,12 @@ from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from users import validators
 from users.exceptions import OTPExpired
 from users.models import User, OTP, Follow
+from users.utils import send_email, otp_update_or_create
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -112,19 +115,24 @@ class OTPSerializer(serializers.ModelSerializer):
 class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        validators=[UniqueValidator(queryset=User.objects.all())],
+        write_only=True
     )
     username = serializers.CharField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        validators=[UniqueValidator(queryset=User.objects.all())],
+        write_only=True
     )
 
     password = serializers.CharField(write_only=True, required=True, validators=[validators.password_validator])
     password2 = serializers.CharField(write_only=True, required=True)
 
+    refresh = serializers.CharField(read_only=True)
+    access = serializers.CharField(read_only=True)
+
     class Meta:
         model = User
-        fields = ('email', 'username', 'password', 'password2')
+        fields = ('email', 'username', 'password', 'password2', 'refresh', 'access')
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -146,7 +154,20 @@ class SignUpSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
 
-        return user
+        otp = random.randint(1000, 9999)
+        subject = "Email Confirmation"
+        message = f"Hi {user.username}! You can confirm you email by using code: {otp}"
+        otp_title = "EmailConfirmation"
+
+        send_email(user.email, subject, message, username=user.username, otp=otp)
+        otp_update_or_create(otp_title, otp, user.email)
+
+        refresh = RefreshToken.for_user(user)
+
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
 
 
 class ForgotPasswordSerializer(serializers.ModelSerializer):

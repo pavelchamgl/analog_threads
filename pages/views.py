@@ -14,7 +14,8 @@ from cloudinary.uploader import upload
 from config.utils import ThreadsMainPaginatorLTE, ThreadsMainPaginatorInspector, ThreadsMainPaginator
 from users.models import User
 from . import serializers
-from .models import Post, Comment
+from .base_views import BaseSearchView
+from .models import Post, Comment, HashTag
 from .permissions import (CommentPermission,
                           ReplyPermission)
 from .serializers import (PostViewSerializer,
@@ -53,9 +54,6 @@ class PostModelViewSet(mixins.CreateModelMixin,
         }
     )
     def create(self, request, *args, **kwargs):
-        user = self.request.user
-        request.data['author'] = user.id
-
         image = request.FILES.get('image')
         video = request.FILES.get('video')
 
@@ -107,7 +105,7 @@ class PostModelViewSet(mixins.CreateModelMixin,
             return Response({'message': 'You can\'t provide both an image and a video. Choose one.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = PostCreateSerializer(data=request.data)
+        serializer = PostCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'message': 'Post added successfully.'},
@@ -130,8 +128,6 @@ class RepostCreateAPIVIew(CreateAPIView):
         }
     )
     def post(self, request, *args, **kwargs):
-        user = self.request.user
-        request.data['author'] = user.id
         post_id = self.kwargs['post_id']
         request.data['repost'] = post_id
 
@@ -139,7 +135,7 @@ class RepostCreateAPIVIew(CreateAPIView):
             post = get_object_or_404(Post, id=post_id)
         except Post.DoesNotExist:
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'message': 'Repost added successfully.'}, status=status.HTTP_201_CREATED)
@@ -157,8 +153,6 @@ class QuoteCreateAPIVIew(CreateAPIView):
         }
     )
     def post(self, request, *args, **kwargs):
-        user = self.request.user
-        request.data['author'] = user.id
         post_id = self.kwargs['post_id']
         request.data['repost'] = post_id
 
@@ -166,7 +160,7 @@ class QuoteCreateAPIVIew(CreateAPIView):
             post = get_object_or_404(Post, id=post_id)
         except Post.DoesNotExist:
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = QuoteCreateSerializer(data=request.data)
+        serializer = QuoteCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'message': 'Quote added successfully.'}, status=status.HTTP_201_CREATED)
@@ -220,15 +214,13 @@ class CommentListCreateAPIView(ListCreateAPIView):
         return Comment.objects.order_by('-date_posted')
 
     def create(self, request, *args, **kwargs):
-        user = self.request.user
-        request.data['author'] = user.id
         post_id = self.kwargs['post_id']
         request.data['post'] = post_id
         try:
             post = get_object_or_404(Post, id=post_id)
         except Post.DoesNotExist:
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return Response({'message': 'Comment added successfully.'}, status=status.HTTP_201_CREATED)
@@ -250,7 +242,6 @@ class ReplyCreateAPIView(CreateAPIView):
         }
     )
     def post(self, request, *args, **kwargs):
-        request.data['author'] = request.user.id
         comment_id = self.kwargs['comment_id']
 
         try:
@@ -259,7 +250,7 @@ class ReplyCreateAPIView(CreateAPIView):
             return Response({'error': 'Comment not found.'}, status=status.HTTP_404_NOT_FOUND)
         request.data['post'] = comment.post.id
         request.data['reply'] = comment.id
-        serializer = ReplyCreateSerializer(data=request.data)
+        serializer = ReplyCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'message': 'Reply added successfully.'}, status=status.HTTP_201_CREATED)
@@ -286,7 +277,9 @@ class ForYouFeedView(generics.ListAPIView):
 
 
 class FollowingFeedView(generics.ListAPIView):
-    """Following feed page records"""
+    """
+    Following feed page records
+    """
     permission_classes = [IsAuthenticated]
     model = Post
     serializer_class = PostViewSerializer
@@ -305,22 +298,28 @@ class FollowingFeedView(generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class UsersSearchView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
+class UsersSearchView(BaseSearchView):
+    """
+    Search view for users by username
+    """
     model = User
     serializer_class = serializers.UserSearchSerializer
-    pagination_class = ThreadsMainPaginator
-    pagination_inspector = ThreadsMainPaginatorInspector
 
-    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
-    def get(self, request, username, *args, **kwargs):
-        queryset = User.objects.filter(username__icontains=username)
-        paginator = ThreadsMainPaginator()
-        result_page = paginator.paginate_queryset(queryset, request)
-        serializer = self.serializer_class(result_page, many=True, context=self.get_serializer_context())
-        return paginator.get_paginated_response(serializer.data)
+    def get_queryset(self):
+        search_obj = self.kwargs.get('search_obj')
+        queryset = User.objects.filter(username__icontains=search_obj)
+        return queryset
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context['request'] = self.request
-        return context
+
+class HashTagsSearch(BaseSearchView):
+    """
+    Search view for hashtags
+    """
+    model = HashTag
+    serializer_class = serializers.HashTagSearchSerializer
+
+    def get_queryset(self):
+        search_obj = self.kwargs.get('search_obj')
+        queryset = HashTag.objects.filter(tag_name__icontains=search_obj)
+        return queryset
+
