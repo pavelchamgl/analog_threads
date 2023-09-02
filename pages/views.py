@@ -256,6 +256,24 @@ class ReplyCreateAPIView(CreateAPIView):
         return Response({'message': 'Reply added successfully.'}, status=status.HTTP_201_CREATED)
 
 
+class PostsByHashTagView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    model = HashTag
+    serializer_class = PostViewSerializer
+    pagination_class = ThreadsMainPaginatorLTE
+    pagination_inspector = ThreadsMainPaginatorInspector
+
+    def get_queryset(self):
+        tag_name = self.kwargs.get('tag_name')
+        hashtag = get_object_or_404(HashTag, tag_name=tag_name)
+        queryset = Post.objects.filter(hash_tag=hashtag).order_by('-pk', '-date_posted')
+        return queryset
+
+    @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+
 class ForYouFeedView(generics.ListAPIView):
     """For You feed page records"""
     permission_classes = [IsAuthenticated]
