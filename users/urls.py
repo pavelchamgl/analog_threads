@@ -36,7 +36,7 @@ urlpatterns = [
     path('user/profile/update/', views.UserProfileUpdateView.as_view(), name='user_profile_update'),
     path('user/profile/<int:pk>/', views.UserProfileViewByPK.as_view(), name='user_profile_data'),
     path('user/profile/<str:username>/', views.UserProfileViewByUsername.as_view(), name='user-profile-by-username'),
-    path('user/profile/my/edit_photo', views.UserProfilePhotoUpdateAPIView.as_view(), name='user_profile_edit_photo'),
+    path('user/profile/my/edit_photo/', views.UserProfilePhotoUpdateAPIView.as_view(), name='user_profile_edit_photo'),
 
 
 ]
