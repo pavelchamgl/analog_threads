@@ -26,7 +26,7 @@ class User(AbstractUser):
     username = models.CharField(max_length=32, unique=True)
     full_name = models.CharField(max_length=50, blank=True, null=True)
     email = models.EmailField(unique=True)
-    #photo = models.ImageField(upload_to="", blank=True, null=True)
+    photo = models.URLField(blank=True, null=True)
     bio = models.CharField(max_length=254, blank=True, null=True)
     website = models.URLField(max_length=124, blank=True, null=True)
     location = models.CharField(max_length=200, blank=True, null=True)

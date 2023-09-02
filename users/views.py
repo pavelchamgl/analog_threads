@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
+from cloudinary.uploader import upload
 
 from config.utils import ThreadsMainPaginatorInspector, ThreadsMainPaginator
 from users import permissions, serializers
@@ -467,3 +468,67 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     """Takes a set of user credentials and returns an access and refresh JSON web
     token pair to prove the authentication of those credentials."""
     serializer_class = serializers.CustomTokenObtainPairSerializer
+
+
+class UserProfilePhotoUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        request_body=serializers.UserProfilePhotoUpdateSerializer,
+        operation_description="This endpoint update user profile photo.",
+        responses={
+            201: 'Photo edited successfully.',
+            400: 'Bad Request.'
+        }
+    )
+    def patch(self, request):
+        user = self.request.user
+        photo = request.FILES.get('photo')
+
+        photo_allowed_formats = ['image/png', 'image/jpeg']
+        photo_max_file_size = {
+            'image/png': 3 * 1024 * 1024,  # 3 MB
+            'image/jpeg': 3 * 1024 * 1024  # 3 MB
+        }
+        if not photo:
+            return Response({'message': 'No image to upload.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        if photo.content_type not in photo_allowed_formats:
+            return Response({'message': 'Invalid image format. Only PNG and JPEG formats are allowed.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        if photo.size > photo_max_file_size.get(photo.content_type, 0):
+            return Response({'message': 'File size should be within PNG/JPG- 3 MB.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        photo_response = upload(photo,
+                                folder="profiles_photo/",
+                                transformation=[
+                                    {"width": "1280", "crop": "scale"},
+                                    {'quality': "auto:best"},
+                                    {'fetch_format': "auto"}
+                                ],
+                                resource_type='auto')
+        request.data['photo'] = photo_response['secure_url']
+        serializer = serializers.UserProfilePhotoUpdateSerializer(user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'message': 'Photo edited successfully.'},
+                        status=status.HTTP_201_CREATED)
+
+
+class UserProfilePhotoDestroyAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="This endpoint delete user profile photo.",
+        responses={
+            204: 'Photo deleted successfully.',
+            400: 'Bad Request.'
+        }
+    )
+    def delete(self, request):
+        user = User.objects.get(id=request.user.id)
+        user.photo = None
+        user.save()
+        return Response({'message': 'Photo deleted successfully.'},
+                        status=status.HTTP_204_NO_CONTENT)
