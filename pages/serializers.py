@@ -14,7 +14,6 @@ class RepostViewSerializer(serializers.ModelSerializer):
 
 
 class PostViewSerializer(serializers.ModelSerializer):
-    author = serializers.HiddenField(default=serializers.CurrentUserDefault(), write_only=True)
     repost = RepostViewSerializer()
     total_likes = SerializerMethodField()
     user_like = SerializerMethodField()
