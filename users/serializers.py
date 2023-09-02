@@ -247,3 +247,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             refresh_token = data['refresh']
             self.context['request'].set_cookie('refresh_token', refresh_token, httponly=True, max_age=3600 * 24 * 7)
         return data
+
+
+class UserProfilePhotoUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['photo']
