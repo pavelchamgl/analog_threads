@@ -34,7 +34,7 @@ urlpatterns = [
     path('user/profile/delete/', views.DeleteFollowerView.as_view(), name='delete_follower_action'),
 
     path('user/profile/update/', views.UserProfileUpdateView.as_view(), name='user_profile_update'),
-    path('user/profile/who_am_i/', views.SelfUserView.as_view(), name='user-who-am-i'),
+    path('user/profile/me/', views.SelfUserView.as_view(), name='user_profile_me'),
     path('user/profile/<int:pk>/', views.UserProfileViewByPK.as_view(), name='user_profile_data'),
     path('user/profile/<str:username>/', views.UserProfileViewByUsername.as_view(), name='user-profile-by-username'),
 
