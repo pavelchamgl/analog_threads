@@ -14,6 +14,7 @@ urlpatterns = [
     re_path('post/comments/(?P<comment_id>.+)/reply/', views.ReplyCreateAPIView.as_view(), name='reply'),
     re_path('post/(?P<post_id>.+)/repost/', views.RepostCreateAPIVIew.as_view(), name='repost_create'),
     re_path('post/(?P<post_id>.+)/quote/', views.QuoteCreateAPIVIew.as_view(), name='quote_create'),
+    path('post/by_hashtag/<str:tag_name>/', views.PostsByHashTagView.as_view(), name='post_by_hashtag'),
 
     path('feed/for_you/', views.ForYouFeedView.as_view(), name='for_you_feed'),
     path('feed/following/', views.FollowingFeedView.as_view(), name='following_feed'),

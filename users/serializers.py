@@ -13,10 +13,10 @@ from users.models import User, OTP, Follow
 from users.utils import send_email, otp_update_or_create
 
 
-class UserSerializer(serializers.ModelSerializer):
+class SelfUserProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        models = User
-        fields = ['email', 'username']
+        model = User
+        fields = ['pk', 'username', 'full_name', 'bio', 'website', 'location', 'photo', 'is_email_verify']
 
 
 class UserProfileDataSerializer(serializers.ModelSerializer):

@@ -17,7 +17,6 @@ class BaseSearchView(generics.ListAPIView):
         queryset = self.get_queryset()
         paginator = ThreadsMainPaginator()
         result_page = paginator.paginate_queryset(queryset, request)
-        print(self.serializer_class)
         serializer = self.serializer_class(result_page, many=True, context=self.get_serializer_context())
         return paginator.get_paginated_response(serializer.data)
 

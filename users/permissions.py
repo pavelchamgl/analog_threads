@@ -29,3 +29,8 @@ class PublicOrPrivateProfilePermission(BasePermission):
             ).exists()
             return follow
 
+
+class EmailVerified(BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_email_verify:
+            return True
