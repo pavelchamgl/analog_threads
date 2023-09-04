@@ -28,7 +28,7 @@ class UserProfileDataSerializer(serializers.ModelSerializer):
     bio = serializers.CharField(required=False)
     website = serializers.CharField(required=False)
     location = serializers.CharField(required=False)
-    photo = serializers.ImageField(required=False)
+    photo = serializers.URLField(required=False)
     full_name = serializers.CharField(required=False)
 
     class Meta:
