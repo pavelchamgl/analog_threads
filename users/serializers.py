@@ -29,6 +29,7 @@ class UserProfileDataSerializer(serializers.ModelSerializer):
     website = serializers.CharField(required=False)
     location = serializers.CharField(required=False)
     photo = serializers.ImageField(required=False)
+    full_name = serializers.CharField(required=False)
 
     class Meta:
         model = User
@@ -198,9 +199,8 @@ class ForgotPasswordSerializer(serializers.ModelSerializer):
             if otp.expired_date < timezone.now():
                 raise OTPExpired
             otp.value = None
-            otp.user.is_e = True
             otp.user.set_password(self.validated_data['password'])
-            otp.save()
+            otp.user.save()
         except (OTP.DoesNotExist, OTPExpired):
             raise serializers.ValidationError({'detail': "This user does not exist or otp incorrect or expired"})
 
