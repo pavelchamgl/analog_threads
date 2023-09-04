@@ -6,7 +6,6 @@ from .models import Post, Comment, HashTag
 
 
 class RepostViewSerializer(serializers.ModelSerializer):
-    author = serializers.HiddenField(default=serializers.CurrentUserDefault(), write_only=True)
 
     class Meta:
         model = Post
@@ -56,7 +55,6 @@ class QuoteCreateSerializer(serializers.ModelSerializer):
 
 
 class ReplyViewSerializer(serializers.ModelSerializer):
-    author = serializers.HiddenField(default=serializers.CurrentUserDefault(), write_only=True)
 
     class Meta:
         model = Comment
@@ -64,8 +62,6 @@ class ReplyViewSerializer(serializers.ModelSerializer):
 
 
 class CommentViewSerializer(serializers.ModelSerializer):
-    author = serializers.HiddenField(default=serializers.CurrentUserDefault(), write_only=True)
-
     reply = ReplyViewSerializer()
     total_likes = SerializerMethodField()
     user_like = SerializerMethodField()

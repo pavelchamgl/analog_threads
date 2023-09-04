@@ -1,8 +1,5 @@
-import random
-
 from django.conf import settings
 from django.core.mail import send_mail
-from django.conf import settings
 from django.utils import timezone
 
 from users.models import OTP, User
