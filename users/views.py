@@ -23,7 +23,9 @@ class TestView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        return Response({'ok': f'You authenticated! {self.request.user}'})
+        return Response(
+            {'ok': f'You authenticated! {self.request.user}, email verify: {self.request.user.is_email_verify}'}
+        )
 
 
 class SelfUserView(generics.RetrieveAPIView):
@@ -42,21 +44,21 @@ class SelfUserView(generics.RetrieveAPIView):
 class UserCreateApiView(generics.CreateAPIView):
     """API view for creating new user model instances."""
     queryset = User.objects.all()
-    permission_classes = (permissions.NotAuthenticate, permissions.EmailVerified)
+    permission_classes = (permissions.NotAuthenticate,)
     serializer_class = serializers.SignUpSerializer
 
 
 class UserProfileViewByPK(generics.RetrieveAPIView):
     """API view to retrieve user profile data by id."""
     queryset = User.objects.all()
-    permission_classes = (AllowAny, permissions.EmailVerified)
+    permission_classes = (IsAuthenticated, permissions.EmailVerified)
     serializer_class = serializers.UserProfileDataSerializer
 
 
 class UserProfileViewByUsername(generics.RetrieveAPIView):
     """API view to retrieve user profile data by username."""
     queryset = User.objects.all()
-    permission_classes = (AllowAny, permissions.EmailVerified)
+    permission_classes = (IsAuthenticated, permissions.EmailVerified)
     serializer_class = serializers.UserProfileDataSerializer
     lookup_field = 'username'
 
@@ -352,7 +354,7 @@ class ForgotPasswordApiView(BaseOtpView):
 
 class ConfirmEmailView(BaseOtpView):
     """API view for sending email confirmation one-time passwords (OTP)."""
-    permission_classes = (IsAuthenticated, permissions.EmailVerified)
+    permission_classes = (IsAuthenticated,)
     serializer = serializers.ConfirmEmailMessageSendSerializer
 
     subject = "Email Confirmation"
@@ -371,14 +373,14 @@ class ForgotPasswordOTPVerifyView(BaseOTPVerifyView):
 class ConfirmEmailOTPVerifyView(BaseOTPVerifyView):
     """API view for verifying the one-time password (OTP) during the password recovery process."""
     serializer = serializers.OTPSerializer
-    permission_classes = (IsAuthenticated, permissions.EmailVerified)
+    permission_classes = (IsAuthenticated,)
 
     otp_title = "EmailConfirmation"
 
 
 class ForgotPasswordUpdateApiView(APIView):
     """API view for updating a user's forgotten password."""
-    permission_classes = (IsAuthenticated, permissions.EmailVerified)
+    permission_classes = (AllowAny,)
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -423,7 +425,7 @@ class ForgotPasswordUpdateApiView(APIView):
 
 class ConfirmEmailUpdateApiView(APIView):
     """API view for updating email confirmation status."""
-    permission_classes = (IsAuthenticated, permissions.EmailVerified)
+    permission_classes = (IsAuthenticated,)
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -471,7 +473,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 
 class UserProfilePhotoUpdateAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, permissions.EmailVerified]
 
     @swagger_auto_schema(
         request_body=serializers.UserProfilePhotoUpdateSerializer,
@@ -517,7 +519,7 @@ class UserProfilePhotoUpdateAPIView(APIView):
 
 
 class UserProfilePhotoDestroyAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, permissions.EmailVerified]
 
     @swagger_auto_schema(
         operation_description="This endpoint delete user profile photo.",
