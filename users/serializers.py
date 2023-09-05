@@ -199,6 +199,7 @@ class ForgotPasswordSerializer(serializers.ModelSerializer):
                 raise OTPExpired
             otp.value = None
             otp.user.set_password(self.validated_data['password'])
+            otp.save()
             otp.user.save()
         except (OTP.DoesNotExist, OTPExpired):
             raise serializers.ValidationError({'detail': "This user does not exist or otp incorrect or expired"})
@@ -236,6 +237,7 @@ class ConfirmEmailSerializer(serializers.ModelSerializer):
             otp.value = None
             otp.user.is_email_verify = True
             otp.save()
+            otp.user.save()
         except (OTP.DoesNotExist, OTPExpired):
             raise serializers.ValidationError({'detail': "This user does not exist or otp incorrect or expired"})
 
