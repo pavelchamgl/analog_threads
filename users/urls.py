@@ -6,6 +6,7 @@ from users import views
 urlpatterns = [
     # path('sign_in/', include('social_django.urls')),
     path('auth_test/', views.TestView.as_view(), name='test'),
+    path('sock_test/', views.SockTestView.as_view(), name='sock_test'),
 
     path('sign_up/', views.UserCreateApiView.as_view(), name='sign_up'),
     path('sign_in/', views.CustomTokenObtainPairView.as_view(), name='sign_in'),

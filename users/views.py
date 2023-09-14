@@ -1,5 +1,7 @@
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from dj_rest_auth.registration.views import SocialLoginView
 from drf_yasg import openapi
@@ -26,6 +28,24 @@ class TestView(APIView):
         return Response(
             {'ok': f'You authenticated! {self.request.user}, email verify: {self.request.user.is_email_verify}'}
         )
+
+
+class SockTestView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        message = "Ваше сообщение"
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            str(self.request.user.pk),
+            {
+                "type": "send_notification",
+                "message": message,
+            },
+        )
+
+        return Response({"detail": "Сообщение отправлено успешно"})
 
 
 class SelfUserView(generics.RetrieveAPIView):
