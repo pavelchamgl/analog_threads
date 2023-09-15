@@ -1,9 +1,16 @@
 from collections import OrderedDict
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from drf_yasg import openapi
 from drf_yasg.inspectors import PaginatorInspector
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+
+from config import types
+from config.types import NotificationType
+from pages.models import Notification
+from users.models import User
 
 
 class ThreadsMainPaginatorInspector(PaginatorInspector):
@@ -74,3 +81,26 @@ class ThreadsMainPaginator(PageNumberPagination):
 
 class ThreadsMainPaginatorLTE(ThreadsMainPaginator):
     lookup = 'id__lte'
+
+
+def send_notification(recipient: User, notification_type: types.Notification):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        str(recipient.pk),
+        {
+            "type": "send_notification",
+            "message": notification_type.message,
+        },
+    )
+    Notification.objects.create(
+        owner=recipient,
+        text=notification_type.message,
+        related_post=notification_type.related_post if notification_type.related_post else None,
+        related_comment=notification_type.related_comment if notification_type.related_comment else None,
+        related_user=notification_type.related_user if notification_type.related_user else None,
+    )
+
+
+def send_multiple_notification(users: User.objects, notification_type: types.Notification):
+    for user in users:
+        send_notification(user, notification_type)
