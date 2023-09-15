@@ -15,7 +15,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from cloudinary.uploader import upload
 
-from config.utils import ThreadsMainPaginatorInspector, ThreadsMainPaginator
+from config.types import NotificationType
+from config.utils import ThreadsMainPaginatorInspector, ThreadsMainPaginator, send_notification, send_multiple_notification
 from users import permissions, serializers
 from users.base_views import BaseOtpView, BaseOTPVerifyView
 from users.models import User, Follow
