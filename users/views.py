@@ -35,17 +35,7 @@ class SockTestView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        message = "Ваше сообщение"
-
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            str(self.request.user.pk),
-            {
-                "type": "send_notification",
-                "message": message,
-            },
-        )
-
+        send_notification(request.user, NotificationType.test())
         return Response({"detail": "Сообщение отправлено успешно"})
 
 
