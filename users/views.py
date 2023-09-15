@@ -224,6 +224,7 @@ class FollowActionView(APIView):
 
             allowed = not followee.is_private
             follow = Follow.objects.create(followee=followee, follower=follower, allowed=allowed)
+            send_notification(followee, NotificationType.new_subscriber(follower))
 
             mutual_follow_data = self.secondary_serializer(instance=follow).data
             return Response(mutual_follow_data, status=status.HTTP_200_OK)
