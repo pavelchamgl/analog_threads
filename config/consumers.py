@@ -8,16 +8,12 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 class NotificationsConsumer(WebsocketConsumer):
-    room_group_name = 'notifications'
-
     def connect(self):
         token = self.scope.get('query_string').decode('utf-8').split('=')[1]
-        print(token)
 
         try:
             jwt_auth = AccessToken(token)
             user = jwt_auth['user_id']
-            print(user, type(user))
         except TokenError:
             user = None
 
@@ -34,5 +30,4 @@ class NotificationsConsumer(WebsocketConsumer):
 
     def send_notification(self, event):
         message = event["message"]
-
         self.send(text_data=json.dumps({"message": message}))
