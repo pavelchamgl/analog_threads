@@ -26,6 +26,7 @@ cloudinary = "^1.34.0"
 channels = "^4.0.0"
 daphne = "^4.0.0"
 channels-redis = "^4.0.0"
+celery = "^5.3.4"
 
 [build-system]
 requires = ["poetry-core"]

@@ -157,6 +157,11 @@ OTP_LIFETIME = timedelta(minutes=15)
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = "config.asgi.application"
 
+
+CELERY_TIMEZONE = "UTC"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_BROKER_URL = 'redis://redis:6379/0'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 

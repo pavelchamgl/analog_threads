@@ -5,57 +5,80 @@ from users.models import User
 class NotificationType:
     @staticmethod
     def test():
-        type_ = 'test'
-        message = "All is work fine!"
-        return Notification(type_, message)
+        return {
+            "type": "test",
+            "message": "All is work fine!",
+            "related_user": None,
+            "related_post": None,
+            "related_comment": None,
+        }
 
     @staticmethod
     def new_thread():
-        type_ = 'new_thread'
-        message = "We have new updates from people you follow!"
-        return Notification(type_, message)
+        return {
+            "type": "new_thread",
+            "message": "We have new updates from people you follow!",
+            "related_user": None,
+            "related_post": None,
+            "related_comment": None,
+        }
 
     @staticmethod
-    def new_subscriber(user: User):
-        type_ = 'new_subscriber'
-        message = f'@{user.username} just followed you!'
-        return Notification(type_, message, related_user=user)
+    def new_subscriber(user):
+        return {
+            "type": "new_subscriber",
+            "message": f'@{user.username} just followed you!',
+            "related_user": user.id,
+            "related_post": None,
+            "related_comment": None,
+        }
 
     @staticmethod
-    def new_thread_like(user: User):
-        type_ = 'new_like'
-        message = f'@{user.username} just liked your thread!'
-        return Notification(type_, message, related_user=user)
+    def new_thread_like(user):
+        return {
+            "type": "new_like",
+            "message": f'@{user.username} just liked your thread!',
+            "related_user": user.id,
+            "related_post": None,
+            "related_comment": None,
+        }
 
     @staticmethod
-    def new_comment_like(user: User, comment: Comment):
-        type_ = 'new_like'
-        message = f'@{user.username} just liked your comment!'
-        return Notification(type_, message, related_user=user, related_comment=comment)
+    def new_comment_like(user, comment):
+        return {
+            "type": "new_like",
+            "message": f'@{user.username} just liked your comment!',
+            "related_user": user.id,
+            "related_post": None,
+            "related_comment": comment.id,
+        }
 
     @staticmethod
-    def new_comment(user: User, related_post: Post, comment: Comment):
-        type_ = 'new_comment'
-        message = f'@{user.username} just commented on your thread!'
-        return Notification(type_, message, related_user=user, related_post=related_post, related_comment=comment)
+    def new_comment(user, related_post, comment):
+        return {
+            "type": "new_comment",
+            "message": f'@{user.username} just commented on your thread!',
+            "related_user": user.id,
+            "related_post": related_post.id,
+            "related_comment": comment.id,
+        }
 
     @staticmethod
-    def new_mentions_in_comment(user: User, comment: Comment):
-        type_ = 'new_mention'
-        message = f'@{user.username} just mentioned you in a comment!'
-        return Notification(type_, message, related_user=user, related_comment=comment)
+    def new_mentions_in_comment(user, comment):
+        return {
+            "type": "new_mention",
+            "message": f'@{user.username} just mentioned you in a comment!',
+            "related_user": user.id,
+            "related_post": None,
+            "related_comment": comment.id,
+        }
 
     @staticmethod
-    def new_mentions_in_thread(user: User, post: Post):
-        type_ = 'new_mention'
-        message = f'@{user.username} just mentioned you in a thread!'
-        return Notification(type_, message, related_user=user, related_post=post)
-
-
-class Notification:
-    def __init__(self, type_, message, related_user=None, related_post=None, related_comment=None):
-        self.type = type_
-        self.message = message
-        self.related_user = related_user
-        self.related_post = related_post
-        self.related_comment = related_comment
+    def new_mentions_in_thread(user, post):
+        return {
+            "type": "new_mention",
+            "message": f'@{user.username} just mentioned you in a thread!',
+            "related_user": user.id,
+            "related_post": post.id,
+            "related_comment": None,
+        }
