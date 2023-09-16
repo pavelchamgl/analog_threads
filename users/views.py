@@ -1,5 +1,7 @@
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from dj_rest_auth.registration.views import SocialLoginView
 from drf_yasg import openapi
@@ -13,7 +15,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from cloudinary.uploader import upload
 
-from config.utils import ThreadsMainPaginatorInspector, ThreadsMainPaginator
+from config.types import NotificationType
+from config.utils import ThreadsMainPaginatorInspector, ThreadsMainPaginator, send_notification, send_multiple_notification
 from users import permissions, serializers
 from users.base_views import BaseOtpView, BaseOTPVerifyView
 from users.models import User, Follow
@@ -26,6 +29,14 @@ class TestView(APIView):
         return Response(
             {'ok': f'You authenticated! {self.request.user}, email verify: {self.request.user.is_email_verify}'}
         )
+
+
+class SockTestView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        send_notification(request.user, NotificationType.test())
+        return Response({"detail": "Сообщение отправлено успешно"})
 
 
 class SelfUserView(generics.RetrieveAPIView):
@@ -204,6 +215,7 @@ class FollowActionView(APIView):
 
             allowed = not followee.is_private
             follow = Follow.objects.create(followee=followee, follower=follower, allowed=allowed)
+            send_notification(followee, NotificationType.new_subscriber(follower))
 
             mutual_follow_data = self.secondary_serializer(instance=follow).data
             return Response(mutual_follow_data, status=status.HTTP_200_OK)

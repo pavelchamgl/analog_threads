@@ -65,5 +65,11 @@ class Comment(models.Model):
 class HashTag(models.Model):
     tag_name = models.CharField(max_length=255, unique=True)
 
-# class Notification(models.Model):
-#     pass
+
+class Notification(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.CharField(max_length=1024)
+    related_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='related_user', blank=True, null=True)
+    related_post = models.ForeignKey(Post, on_delete=models.CASCADE, blank=True, null=True)
+    related_comment = models.ForeignKey(Comment, on_delete=models.CASCADE, blank=True, null=True)
+    date_posted = models.DateTimeField(auto_now_add=True)
