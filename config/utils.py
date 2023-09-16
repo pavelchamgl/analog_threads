@@ -89,7 +89,7 @@ def send_notification(recipient: User, notification_type: types.Notification):
         str(recipient.pk),
         {
             "type": "send_notification",
-            "message": notification_type.message,
+            "message": f'"{notification_type.type}": "{notification_type.message}"',
         },
     )
     Notification.objects.create(
