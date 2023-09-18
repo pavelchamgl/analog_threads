@@ -30,6 +30,9 @@ class Post(models.Model):
     def user_like(self, user):
         return self.likes.filter(pk=user.pk).exists()
 
+    def total_comments(self):
+        return Comment.objects.filter(post=self).count()
+
     def add_hashtags(self, tag_list: list):
         for tag_name in tag_list:
             hashtag, created = HashTag.objects.get_or_create(tag_name=tag_name)
