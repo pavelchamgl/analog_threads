@@ -29,12 +29,11 @@ from .serializers import (PostViewSerializer,
 
 
 class PostModelViewSet(mixins.CreateModelMixin,
-                       mixins.RetrieveModelMixin,
                        mixins.DestroyModelMixin,
                        mixins.ListModelMixin,
                        GenericViewSet):
     """
-    API view for user post model instances (List/Retrieve/Destroy).
+    API view for user post model instances (List/Create/Destroy).
     """
     serializer_class = PostViewSerializer
     permission_classes = (IsAuthenticated, EmailVerified)
