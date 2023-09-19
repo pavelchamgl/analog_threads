@@ -9,6 +9,7 @@ router.register('', views.PostModelViewSet, basename='post')
 
 urlpatterns = [
     path('post/', include(router.urls)),
+    re_path('post/(?P<post_id>.+)/view/', views.PostDetailAPIView.as_view(), name='post-detail'),
     re_path('post/like_unlike/(?P<post_id>.+)/', views.PostLikeUnlikeAPIView.as_view(), name='post_like_unlike'),
     re_path('post/(?P<post_id>.+)/comments/', views.CommentListCreateAPIView.as_view(), name='comment-list-create'),
     re_path('post/comments/(?P<comment_id>.+)/reply/', views.ReplyCreateAPIView.as_view(), name='reply'),
