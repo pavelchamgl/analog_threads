@@ -116,6 +116,21 @@ class PostModelViewSet(mixins.CreateModelMixin,
         return super().list(request, *args, **kwargs)
 
 
+class PostDetailAPIView(APIView):
+    """
+    API view for view detail post model instance.
+    """
+    permission_classes = (IsAuthenticated, EmailVerified)
+
+    def get(self, request, post_id):
+        try:
+            post = Post.objects.get(pk=post_id)
+            serializer = PostViewSerializer(post, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Post.DoesNotExist:
+            return Response({'message': 'Post not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
 class RepostCreateAPIVIew(CreateAPIView):
     permission_classes = (IsAuthenticated, EmailVerified)
     serializer_class = RepostCreateSerializer
