@@ -14,7 +14,7 @@ class Post(models.Model):
     ]
 
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    text = models.CharField(max_length=1024, blank=True, null=True)
+    text = models.CharField(max_length=280, blank=True, null=True)
     image = models.URLField(blank=True, null=True)
     video = models.URLField(blank=True, null=True)
     date_posted = models.DateTimeField(auto_now_add=True)
