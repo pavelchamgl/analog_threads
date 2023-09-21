@@ -3,8 +3,7 @@ from rest_framework import mixins, status
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework.generics import (ListCreateAPIView,
-                                     get_object_or_404,
-                                     CreateAPIView)
+                                     get_object_or_404)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -138,7 +137,7 @@ class RepostCreateAPIVIew(APIView):
     @swagger_auto_schema(
         operation_description="This endpoint for repost.",
         responses={
-            200: 'Repost added successfully.',
+            201: 'Repost added successfully.',
             404: 'Post not found.'
         }
     )
@@ -168,7 +167,7 @@ class QuoteCreateAPIVIew(APIView):
             required=['text'],
         ),
         responses={
-            200: 'Quote added successfully.',
+            201: 'Quote added successfully.',
             404: 'Post not found.'
         }
     )
