@@ -251,14 +251,22 @@ class CommentListCreateAPIView(ListCreateAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class ReplyCreateAPIView(CreateAPIView):
-    serializer_class = ReplyCreateSerializer
+class ReplyCreateAPIView(APIView):
+    """
+    This endpoint for reply.
+    """
     permission_classes = (IsAuthenticated, EmailVerified, ReplyPermission)
 
     @swagger_auto_schema(
-        operation_description="This endpoint for reply.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'text': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+            required=['text'],
+        ),
         responses={
-            200: 'Reply added successfully.',
+            201: 'Reply added successfully.',
             404: 'Comment not found.'
         }
     )
