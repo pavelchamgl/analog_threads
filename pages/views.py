@@ -1,6 +1,7 @@
 from django.db.models import Count, Q
 from rest_framework import mixins, status
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from rest_framework.generics import (ListCreateAPIView,
                                      get_object_or_404,
                                      CreateAPIView)
@@ -155,12 +156,17 @@ class RepostCreateAPIVIew(APIView):
         return Response({'message': 'Repost added successfully.'}, status=status.HTTP_201_CREATED)
 
 
-class QuoteCreateAPIVIew(CreateAPIView):
+class QuoteCreateAPIVIew(APIView):
     permission_classes = (IsAuthenticated, EmailVerified)
-    serializer_class = QuoteCreateSerializer
 
     @swagger_auto_schema(
-        operation_description="This endpoint for quote.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'text': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+            required=['text'],
+        ),
         responses={
             200: 'Quote added successfully.',
             404: 'Post not found.'
