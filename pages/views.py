@@ -211,18 +211,13 @@ class PostLikeUnlikeAPIView(APIView):
 
 
 class CommentListCreateAPIView(ListCreateAPIView):
+    """
+    API endpoint for view post comments.
+    """
+    serializer_class = CommentViewSerializer
     permission_classes = (IsAuthenticated, EmailVerified)
     pagination_class = ThreadsMainPaginator
     pagination_inspector = ThreadsMainPaginatorInspector
-    """
-    API endpoint for comment model instances (List/Create).
-    """
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return CommentViewSerializer
-        elif self.request.method == 'POST':
-            return CommentCreateSerializer
 
     def get_permissions(self):
         if self.request.method == 'GET':
@@ -231,16 +226,33 @@ class CommentListCreateAPIView(ListCreateAPIView):
             return [CommentPermission()]
 
     def get_queryset(self):
-        return Comment.objects.order_by('-date_posted')
+        post_id = self.kwargs['post_id']
+        post = get_object_or_404(Post, pk=post_id)
+        queryset = Comment.objects.filter(post=post).order_by('-date_posted')
+        return queryset
 
-    def create(self, request, *args, **kwargs):
+    @swagger_auto_schema(
+        operation_description="API endpoint for add post comment.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'text': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+            required=['text'],
+        ),
+        responses={
+            201: 'Comment added successfully.',
+            404: 'Post not found.'
+        }
+    )
+    def post(self, request, *args, **kwargs):
         post_id = self.kwargs['post_id']
         request.data['post'] = post_id
         try:
             post = get_object_or_404(Post, id=post_id)
         except Post.DoesNotExist:
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer = CommentCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return Response({'message': 'Comment added successfully.'}, status=status.HTTP_201_CREATED)
