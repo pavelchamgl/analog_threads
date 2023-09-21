@@ -131,9 +131,8 @@ class PostDetailAPIView(APIView):
             return Response({'message': 'Post not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
-class RepostCreateAPIVIew(CreateAPIView):
+class RepostCreateAPIVIew(APIView):
     permission_classes = (IsAuthenticated, EmailVerified)
-    serializer_class = RepostCreateSerializer
 
     @swagger_auto_schema(
         operation_description="This endpoint for repost.",
@@ -150,7 +149,7 @@ class RepostCreateAPIVIew(CreateAPIView):
             post = get_object_or_404(Post, id=post_id)
         except Post.DoesNotExist:
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer = RepostCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'message': 'Repost added successfully.'}, status=status.HTTP_201_CREATED)
