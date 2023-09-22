@@ -262,6 +262,23 @@ class CommentListCreateAPIView(ListCreateAPIView):
         return self.list(request, *args, **kwargs)
 
 
+class CommentDeleteAPIView(APIView):
+    """
+    This endpoint for comment delete.
+    """
+    permission_classes = (IsAuthenticated, EmailVerified)
+
+    def delete(self, request, comment_id):
+        try:
+            comment = Comment.objects.get(pk=comment_id)
+        except Comment.DoesNotExist:
+            return Response({'error': 'Comment not found.'}, status=status.HTTP_404_NOT_FOUND)
+        if comment.author != request.user:
+            return Response({'error': 'You cannot delete this comment.'}, status=status.HTTP_403_FORBIDDEN)
+        comment.delete()
+        return Response({'message': 'Comment delete successfully.'}, status=status.HTTP_204_NO_CONTENT)
+
+
 class ReplyCreateAPIView(APIView):
     """
     This endpoint for reply.
