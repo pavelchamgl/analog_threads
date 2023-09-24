@@ -12,6 +12,7 @@ readme = "README.md"
 DJANGO_SETTINGS_MODULE = "config.test_settings"
 python_files = ["*_test.py"]
 filterwarnings = "ignore::Warning"
+addopts = "--create-db"
 
 [tool.poetry.dependencies]
 python = "^3.11"
