@@ -279,6 +279,31 @@ class CommentDeleteAPIView(APIView):
         return Response({'message': 'Comment delete successfully.'}, status=status.HTTP_204_NO_CONTENT)
 
 
+class CommentLikeUnlikeAPIView(APIView):
+    permission_classes = (IsAuthenticated, EmailVerified)
+
+    @swagger_auto_schema(
+        operation_description="This endpoint like/unlike comment.",
+        responses={
+            200: 'Like added. / Like removed.',
+            404: 'Comment not found.'
+        }
+    )
+    def patch(self, request, comment_id):
+        user = request.user
+
+        try:
+            comment = Comment.objects.get(pk=comment_id)
+        except Comment.DoesNotExist:
+            return Response({'error': 'Comment not found.'}, status=status.HTTP_404_NOT_FOUND)
+        if not comment.likes.filter(id=user.id).exists():
+            comment.likes.add(user.id)
+            return Response({'message': 'Like added.'}, status=status.HTTP_200_OK)
+        elif comment.likes.filter(id=user.id).exists():
+            comment.likes.remove(user.id)
+            return Response({'message': 'Like removed.'}, status=status.HTTP_200_OK)
+
+
 class ReplyCreateAPIView(APIView):
     """
     This endpoint for reply.
