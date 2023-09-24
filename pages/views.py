@@ -18,7 +18,7 @@ from users.models import User
 from users.permissions import EmailVerified
 from . import serializers
 from .base_views import BaseSearchView
-from .models import Post, Comment, HashTag
+from .models import Post, Comment, HashTag, Notification
 from .permissions import (CommentPermission,
                           ReplyPermission)
 from .serializers import (PostViewSerializer,
@@ -356,3 +356,12 @@ class HashTagsSearch(BaseSearchView):
         queryset = HashTag.objects.filter(tag_name__icontains=search_obj)
         return queryset
 
+
+class NotificationsView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated, EmailVerified)
+    model = Notification
+    serializer_class = serializers.NotificationSerializer
+
+    def get_queryset(self):
+        queryset = Notification.objects.filter(owner=self.request.user)
+        return queryset

@@ -2,11 +2,10 @@ from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
 from users.models import User, Follow
-from .models import Post, Comment, HashTag
+from .models import Post, Comment, HashTag, Notification
 
 
 class RepostViewSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Post
         fields = ['id', 'author', 'text', 'image', 'video', 'repost', 'date_posted']
@@ -55,7 +54,6 @@ class QuoteCreateSerializer(serializers.ModelSerializer):
 
 
 class ReplyViewSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Comment
         fields = ['id', 'author', 'text', 'date_posted']
@@ -125,3 +123,8 @@ class HashTagSearchSerializer(serializers.ModelSerializer):
     def get_posts_counts(self, obj):
         return obj.hash_tag_in_posts.all().count()
 
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ["pk", "owner", "text", "related_user", "related_post", "related_comment", "date_posted"]
