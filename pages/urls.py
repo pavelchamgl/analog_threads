@@ -13,6 +13,7 @@ urlpatterns = [
     re_path('post/like_unlike/(?P<post_id>.+)/', views.PostLikeUnlikeAPIView.as_view(), name='post_like_unlike'),
     re_path('post/(?P<post_id>.+)/comments/', views.CommentListCreateAPIView.as_view(), name='comment-list-create'),
     re_path('post/comment/(?P<comment_id>.+)/', views.CommentDeleteAPIView.as_view(), name='comment-delete'),
+    re_path('post/comments/(?P<comment_id>.+)/like_unlike/', views.CommentLikeUnlikeAPIView.as_view(), name='comment-like_unlike'),
     re_path('post/comments/(?P<comment_id>.+)/reply/', views.ReplyCreateAPIView.as_view(), name='reply'),
     re_path('post/(?P<post_id>.+)/repost/', views.RepostCreateAPIVIew.as_view(), name='repost_create'),
     re_path('post/(?P<post_id>.+)/quote/', views.QuoteCreateAPIVIew.as_view(), name='quote_create'),
