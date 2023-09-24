@@ -159,6 +159,7 @@ class QuoteCreateAPIVIew(APIView):
     permission_classes = (IsAuthenticated, EmailVerified)
 
     @swagger_auto_schema(
+        operation_description="This endpoint for quote.",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
