@@ -29,7 +29,7 @@ def send_notification(recipient_id: int, notification_data: dict):
 
 
 @shared_task
-def send_multiple_notification(notification_type: dict, **filters):
+def send_multiple_notifications(notification_type: dict, **filters):
     users = User.objects.filter(**filters)
     for user in users:
         send_notification(user.id, notification_type)
