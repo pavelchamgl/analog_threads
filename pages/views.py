@@ -1,9 +1,9 @@
 from django.db.models import Count, Q
 from rest_framework import mixins, status
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from rest_framework.generics import (ListCreateAPIView,
-                                     get_object_or_404,
-                                     CreateAPIView)
+                                     get_object_or_404)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -31,12 +31,11 @@ from .serializers import (PostViewSerializer,
 
 
 class PostModelViewSet(mixins.CreateModelMixin,
-                       mixins.RetrieveModelMixin,
                        mixins.DestroyModelMixin,
                        mixins.ListModelMixin,
                        GenericViewSet):
     """
-    API view for user post model instances (List/Retrieve/Destroy).
+    API view for user post model instances (List/Create/Destroy).
     """
     serializer_class = PostViewSerializer
     permission_classes = (IsAuthenticated, EmailVerified)
@@ -123,14 +122,28 @@ class PostModelViewSet(mixins.CreateModelMixin,
         return super().list(request, *args, **kwargs)
 
 
-class RepostCreateAPIVIew(CreateAPIView):
+class PostDetailAPIView(APIView):
+    """
+    API view for view detail post model instance.
+    """
     permission_classes = (IsAuthenticated, EmailVerified)
-    serializer_class = RepostCreateSerializer
+
+    def get(self, request, post_id):
+        try:
+            post = Post.objects.get(pk=post_id)
+            serializer = PostViewSerializer(post, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Post.DoesNotExist:
+            return Response({'message': 'Post not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class RepostCreateAPIVIew(APIView):
+    permission_classes = (IsAuthenticated, EmailVerified)
 
     @swagger_auto_schema(
         operation_description="This endpoint for repost.",
         responses={
-            200: 'Repost added successfully.',
+            201: 'Repost added successfully.',
             404: 'Post not found.'
         }
     )
@@ -142,21 +155,27 @@ class RepostCreateAPIVIew(CreateAPIView):
             post = get_object_or_404(Post, id=post_id)
         except Post.DoesNotExist:
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer = RepostCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         repost = serializer.save()
         send_notification.delay(post.author.id, NotificationType.new_repost(request.user, repost))
         return Response({'message': 'Repost added successfully.'}, status=status.HTTP_201_CREATED)
 
 
-class QuoteCreateAPIVIew(CreateAPIView):
+class QuoteCreateAPIVIew(APIView):
     permission_classes = (IsAuthenticated, EmailVerified)
-    serializer_class = QuoteCreateSerializer
 
     @swagger_auto_schema(
         operation_description="This endpoint for quote.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'text': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+            required=['text'],
+        ),
         responses={
-            200: 'Quote added successfully.',
+            201: 'Quote added successfully.',
             404: 'Post not found.'
         }
     )
@@ -202,18 +221,13 @@ class PostLikeUnlikeAPIView(APIView):
 
 
 class CommentListCreateAPIView(ListCreateAPIView):
+    """
+    API endpoint for view post comments.
+    """
+    serializer_class = CommentViewSerializer
     permission_classes = (IsAuthenticated, EmailVerified)
     pagination_class = ThreadsMainPaginator
     pagination_inspector = ThreadsMainPaginatorInspector
-    """
-    API endpoint for comment model instances (List/Create).
-    """
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return CommentViewSerializer
-        elif self.request.method == 'POST':
-            return CommentCreateSerializer
 
     def get_permissions(self):
         if self.request.method == 'GET':
@@ -222,16 +236,33 @@ class CommentListCreateAPIView(ListCreateAPIView):
             return [CommentPermission()]
 
     def get_queryset(self):
-        return Comment.objects.order_by('-date_posted')
+        post_id = self.kwargs['post_id']
+        post = get_object_or_404(Post, pk=post_id)
+        queryset = Comment.objects.filter(post=post).order_by('-date_posted')
+        return queryset
 
-    def create(self, request, *args, **kwargs):
+    @swagger_auto_schema(
+        operation_description="API endpoint for add post comment.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'text': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+            required=['text'],
+        ),
+        responses={
+            201: 'Comment added successfully.',
+            404: 'Post not found.'
+        }
+    )
+    def post(self, request, *args, **kwargs):
         post_id = self.kwargs['post_id']
         request.data['post'] = post_id
         try:
             post = get_object_or_404(Post, id=post_id)
         except Post.DoesNotExist:
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer = CommentCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         comment = serializer.save()
         send_notification.delay(post.author.id, NotificationType.new_comment(request.user, post, comment))
@@ -242,14 +273,64 @@ class CommentListCreateAPIView(ListCreateAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class ReplyCreateAPIView(CreateAPIView):
-    serializer_class = ReplyCreateSerializer
+class CommentDeleteAPIView(APIView):
+    """
+    This endpoint for comment delete.
+    """
+    permission_classes = (IsAuthenticated, EmailVerified)
+
+    def delete(self, request, comment_id):
+        try:
+            comment = Comment.objects.get(pk=comment_id)
+        except Comment.DoesNotExist:
+            return Response({'error': 'Comment not found.'}, status=status.HTTP_404_NOT_FOUND)
+        if comment.author != request.user:
+            return Response({'error': 'You cannot delete this comment.'}, status=status.HTTP_403_FORBIDDEN)
+        comment.delete()
+        return Response({'message': 'Comment delete successfully.'}, status=status.HTTP_204_NO_CONTENT)
+
+
+class CommentLikeUnlikeAPIView(APIView):
+    permission_classes = (IsAuthenticated, EmailVerified)
+
+    @swagger_auto_schema(
+        operation_description="This endpoint like/unlike comment.",
+        responses={
+            200: 'Like added. / Like removed.',
+            404: 'Comment not found.'
+        }
+    )
+    def patch(self, request, comment_id):
+        user = request.user
+
+        try:
+            comment = Comment.objects.get(pk=comment_id)
+        except Comment.DoesNotExist:
+            return Response({'error': 'Comment not found.'}, status=status.HTTP_404_NOT_FOUND)
+        if not comment.likes.filter(id=user.id).exists():
+            comment.likes.add(user.id)
+            return Response({'message': 'Like added.'}, status=status.HTTP_200_OK)
+        elif comment.likes.filter(id=user.id).exists():
+            comment.likes.remove(user.id)
+            return Response({'message': 'Like removed.'}, status=status.HTTP_200_OK)
+
+
+class ReplyCreateAPIView(APIView):
+    """
+    This endpoint for reply.
+    """
     permission_classes = (IsAuthenticated, EmailVerified, ReplyPermission)
 
     @swagger_auto_schema(
-        operation_description="This endpoint for reply.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'text': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+            required=['text'],
+        ),
         responses={
-            200: 'Reply added successfully.',
+            201: 'Reply added successfully.',
             404: 'Comment not found.'
         }
     )

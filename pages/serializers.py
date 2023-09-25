@@ -15,6 +15,7 @@ class PostViewSerializer(serializers.ModelSerializer):
     repost = RepostViewSerializer()
     total_likes = SerializerMethodField()
     user_like = SerializerMethodField()
+    total_comments = SerializerMethodField()
 
     def get_total_likes(self, obj):
         return obj.total_likes()
@@ -22,10 +23,13 @@ class PostViewSerializer(serializers.ModelSerializer):
     def get_user_like(self, obj):
         return obj.user_like(self.context['request'].user)
 
+    def total_comments(self, obj):
+        return obj.total_comments()
+
     class Meta:
         model = Post
         fields = ['id', 'author', 'text', 'date_posted', 'image', 'video', 'repost', 'comments_permission',
-                  'total_likes', 'user_like']
+                  'total_comments', 'total_likes', 'user_like']
 
 
 class PostCreateSerializer(serializers.ModelSerializer):

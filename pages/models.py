@@ -14,7 +14,7 @@ class Post(models.Model):
     ]
 
     author = models.ForeignKey(User, on_delete=models.CASCADE)
-    text = models.CharField(max_length=1024, blank=True, null=True)
+    text = models.CharField(max_length=280, blank=True, null=True)
     image = models.URLField(blank=True, null=True)
     video = models.URLField(blank=True, null=True)
     date_posted = models.DateTimeField(auto_now_add=True)
@@ -29,6 +29,9 @@ class Post(models.Model):
 
     def user_like(self, user):
         return self.likes.filter(pk=user.pk).exists()
+
+    def total_comments(self):
+        return Comment.objects.filter(post=self).count()
 
     def add_hashtags(self, tag_list: list):
         for tag_name in tag_list:
