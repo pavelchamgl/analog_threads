@@ -7,10 +7,11 @@ from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from config.tasks import send_email
 from users import validators
 from users.exceptions import OTPExpired
 from users.models import User, OTP, Follow
-from users.utils import send_email, otp_update_or_create
+from users.utils import otp_update_or_create
 
 
 class SelfUserProfileSerializer(serializers.ModelSerializer):
@@ -159,7 +160,7 @@ class SignUpSerializer(serializers.ModelSerializer):
         message = f"Hi {user.username}! You can confirm you email by using code: {otp}"
         otp_title = "EmailConfirmation"
 
-        send_email(user.email, subject, message, username=user.username, otp=otp)
+        send_email.delay(user.email, subject, message, username=user.username, otp=otp)
         otp_update_or_create(otp_title, otp, user.email)
 
         refresh = RefreshToken.for_user(user)

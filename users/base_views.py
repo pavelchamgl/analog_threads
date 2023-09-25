@@ -7,10 +7,11 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from config.tasks import send_email
 from users import serializers
 from users.exceptions import OTPExpired
 from users.models import User, OTP
-from users.utils import send_email, otp_update_or_create
+from users.utils import otp_update_or_create
 
 
 class BaseOtpView(APIView):
@@ -65,10 +66,8 @@ class BaseOtpView(APIView):
             email = serializer.validated_data['email']
             user = User.objects.get(email=email)
             if user:
-                is_send = send_email(user.email, self.subject, self.message, username=user.username, otp=self.otp)
+                send_email.delay(user.email, self.subject, self.message, username=user.username, otp=self.otp)
                 otp_update_or_create(self.otp_title, self.otp, email)
-                if not is_send:
-                    return Response({"detail": "Error sending email"}, status.HTTP_500_INTERNAL_SERVER_ERROR)
             else:
                 return Response({"detail": "User not found"}, status.HTTP_400_BAD_REQUEST)
             return Response({"detail": "Message successfully sent!"}, status.HTTP_200_OK)

@@ -36,3 +36,10 @@ services:
     depends_on:
       - db
       - redis
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile-celery
+    depends_on:
+      - redis

@@ -15,8 +15,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from cloudinary.uploader import upload
 
+from config.tasks import send_notification
 from config.types import NotificationType
-from config.utils import ThreadsMainPaginatorInspector, ThreadsMainPaginator, send_notification, send_multiple_notification
+from config.utils import ThreadsMainPaginatorInspector, ThreadsMainPaginator
 from users import permissions, serializers
 from users.base_views import BaseOtpView, BaseOTPVerifyView
 from users.models import User, Follow
@@ -35,7 +36,7 @@ class SockTestView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        send_notification(request.user, NotificationType.test())
+        send_notification.delay(request.user.id, NotificationType.test())
         return Response({"detail": "Сообщение отправлено успешно"})
 
 
@@ -215,7 +216,10 @@ class FollowActionView(APIView):
 
             allowed = not followee.is_private
             follow = Follow.objects.create(followee=followee, follower=follower, allowed=allowed)
-            send_notification(followee, NotificationType.new_subscriber(follower))
+            if allowed:
+                send_notification.delay(followee.id, NotificationType.new_subscriber(follower))
+            else:
+                send_notification.delay(followee.id, NotificationType.subscribe_request(follower))
 
             mutual_follow_data = self.secondary_serializer(instance=follow).data
             return Response(mutual_follow_data, status=status.HTTP_200_OK)
@@ -282,6 +286,7 @@ class FollowPendingConfirm(APIView):
                 Follow, followee=request.user.id, follower=serializer.validated_data['follower'].id, allowed=False)
             follow.allowed = True
             follow.save()
+            send_notification.delay(follow.follower.id, NotificationType.subscribe_allowed(follow.followee))
 
             mutual_follow_serializer_instance = self.secondary_serializer(follow)
 

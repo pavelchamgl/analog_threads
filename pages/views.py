@@ -11,12 +11,14 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework import generics
 from cloudinary.uploader import upload
 
+from config.tasks import send_multiple_notifications, send_notification
+from config.types import NotificationType
 from config.utils import ThreadsMainPaginatorLTE, ThreadsMainPaginatorInspector, ThreadsMainPaginator
 from users.models import User
 from users.permissions import EmailVerified
 from . import serializers
 from .base_views import BaseSearchView
-from .models import Post, Comment, HashTag
+from .models import Post, Comment, HashTag, Notification
 from .permissions import (CommentPermission,
                           ReplyPermission)
 from .serializers import (PostViewSerializer,
@@ -109,6 +111,10 @@ class PostModelViewSet(mixins.CreateModelMixin,
         serializer = PostCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        send_multiple_notifications.delay(
+            NotificationType.new_thread(), follower__followee=request.user.id, follower__allowed=True
+        )
+
         return Response({'message': 'Post added successfully.'},
                         status=status.HTTP_201_CREATED)
 
@@ -138,7 +144,8 @@ class RepostCreateAPIVIew(CreateAPIView):
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        repost = serializer.save()
+        send_notification.delay(post.author.id, NotificationType.new_repost(request.user, repost))
         return Response({'message': 'Repost added successfully.'}, status=status.HTTP_201_CREATED)
 
 
@@ -163,7 +170,8 @@ class QuoteCreateAPIVIew(CreateAPIView):
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
         serializer = QuoteCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        quote = serializer.save()
+        send_notification.delay(post.author.id, NotificationType.new_quote(request.user, quote))
         return Response({'message': 'Quote added successfully.'}, status=status.HTTP_201_CREATED)
 
 
@@ -186,6 +194,7 @@ class PostLikeUnlikeAPIView(APIView):
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
         if not post.likes.filter(id=user.id).exists():
             post.likes.add(user.id)
+            send_notification.delay(post.author.id, NotificationType.new_thread_like(user, post))
             return Response({'message': 'Like added.'}, status=status.HTTP_200_OK)
         elif post.likes.filter(id=user.id).exists():
             post.likes.remove(user.id)
@@ -224,7 +233,8 @@ class CommentListCreateAPIView(ListCreateAPIView):
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        comment = serializer.save()
+        send_notification.delay(post.author.id, NotificationType.new_comment(request.user, post, comment))
         return Response({'message': 'Comment added successfully.'}, status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(pagination_class=pagination_class, paginator_inspectors=[pagination_inspector])
@@ -255,6 +265,7 @@ class ReplyCreateAPIView(CreateAPIView):
         serializer = ReplyCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        send_notification.delay()
         return Response({'message': 'Reply added successfully.'}, status=status.HTTP_201_CREATED)
 
 
@@ -345,3 +356,12 @@ class HashTagsSearch(BaseSearchView):
         queryset = HashTag.objects.filter(tag_name__icontains=search_obj)
         return queryset
 
+
+class NotificationsView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated, EmailVerified)
+    model = Notification
+    serializer_class = serializers.NotificationSerializer
+
+    def get_queryset(self):
+        queryset = Notification.objects.filter(owner=self.request.user)
+        return queryset
