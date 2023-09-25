@@ -8,6 +8,12 @@ authors = [
 ]
 readme = "README.md"
 
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.test_settings"
+python_files = ["*_test.py"]
+filterwarnings = "ignore::Warning"
+addopts = "--create-db"
+
 [tool.poetry.dependencies]
 python = "^3.11"
 django = "^4.2.3"
@@ -27,6 +33,7 @@ channels = "^4.0.0"
 daphne = "^4.0.0"
 channels-redis = "^4.0.0"
 celery = "^5.3.4"
+pytest-django = "^4.5.2"
 
 [build-system]
 requires = ["poetry-core"]
