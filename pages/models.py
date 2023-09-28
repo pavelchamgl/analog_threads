@@ -70,8 +70,26 @@ class HashTag(models.Model):
 
 
 class Notification(models.Model):
+    types = [
+        ("test", "test"),
+        ("new_thread", "new_thread"),
+        ("new_repost", "new_repost"),
+        ("new_quote", "new_quote"),
+        ("new_subscriber", "new_subscriber"),
+        ("subscribe_request", "subscribe_request"),
+        ("unsubscribe_request", "unsubscribe_request"),
+        ("follow", "follow"),
+        ("unfollow", "unfollow"),
+        ("subscribe_allowed", "subscribe_allowed"),
+        ("unsubscribe_allowed", "unsubscribe_allowed"),
+        ("new_like", "new_like"),
+        ("new_dislike", "new_dislike"),
+        ("new_comment", "new_comment"),
+        ("new_mention", "new_mention"),
+    ]
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.CharField(max_length=1024)
+    type = models.CharField(max_length=20, choices=types)
     related_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='related_user', blank=True, null=True)
     related_post = models.ForeignKey(Post, on_delete=models.CASCADE, blank=True, null=True)
     related_comment = models.ForeignKey(Comment, on_delete=models.CASCADE, blank=True, null=True)

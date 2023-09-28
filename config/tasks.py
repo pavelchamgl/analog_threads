@@ -22,6 +22,7 @@ def send_notification(recipient_id: int, notification_data: dict):
     Notification.objects.create(
         owner_id=recipient_id,
         text=notification_data["message"],
+        type=notification_data['type'],
         related_post=notification_data.get("related_post"),
         related_comment=notification_data.get("related_comment"),
         related_user_id=notification_data.get("related_user"),

@@ -419,7 +419,7 @@ class UsersSearchView(BaseSearchView):
     serializer_class = serializers.UserSearchSerializer
 
     def get_queryset(self):
-        search_obj = self.kwargs.get('search_obj')
+        search_obj = self.kwargs.get('type')
         queryset = User.objects.filter(username__icontains=search_obj)
         return queryset
 
@@ -439,10 +439,42 @@ class HashTagsSearch(BaseSearchView):
 
 
 class NotificationsView(generics.ListAPIView):
+    """
+    Full list of current user notifications
+    """
     permission_classes = (IsAuthenticated, EmailVerified)
     model = Notification
     serializer_class = serializers.NotificationSerializer
 
     def get_queryset(self):
         queryset = Notification.objects.filter(owner=self.request.user)
+        return queryset
+
+
+class NotificationsByTypeView(generics.ListAPIView):
+    """
+    List of current user notifications by type
+    allowed types ->
+    - test,
+    - new_thread,
+    - new_repost,
+    - new_quote,
+    - new_subscriber,
+    - subscribe_request,
+    - unsubscribe_request,
+    - follow,
+    - unfollow,
+    - subscribe_allowed,
+    - unsubscribe_allowed,
+    - new_like,
+    - new_dislike,
+    - new_comment,
+    - new_mention
+    """
+    permission_classes = (IsAuthenticated, EmailVerified)
+    model = Notification
+    serializer_class = serializers.NotificationSerializer
+
+    def get_queryset(self):
+        queryset = Notification.objects.filter(owner=self.request.user, type=self.kwargs.get('type'))
         return queryset

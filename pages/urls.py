@@ -26,4 +26,5 @@ urlpatterns = [
     path('search/hashtag/<str:search_obj>/', views.HashTagsSearch().as_view(), name='hashtag_search_view'),
 
     path('notifications/', views.NotificationsView.as_view(), name='notifications'),
+    path('notifications/<str:type>/', views.NotificationsByTypeView.as_view(), name='user_notifications'),
 ]
