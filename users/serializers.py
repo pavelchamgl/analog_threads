@@ -60,22 +60,11 @@ class UserProfileDataSerializer(serializers.ModelSerializer):
             return "Follow in response"
         return "Followed" if follow.allowed else "Pending"
 
-class UserProfileSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(
-        required=False,
-        validators=[UniqueValidator(queryset=User.objects.all())]
-    )
-    bio = serializers.CharField(required=False)
-    website = serializers.CharField(required=False)
-    location = serializers.CharField(required=False)
-    photo = serializers.URLField(required=False)
-    full_name = serializers.CharField(required=False)
-    is_private = serializers.BooleanField(required=False)
 
+class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['pk', 'username', 'full_name', 'bio', 'website', 'location', 'photo', 'is_private']
-
 
 
 class FollowersSerializer(serializers.ModelSerializer):
