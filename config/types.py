@@ -126,3 +126,13 @@ class NotificationType:
             "related_post": post.id,
             "related_comment": None,
         }
+
+    @staticmethod
+    def new_reply(user, comment):
+        return {
+            "type": "new_reply",
+            "message": f'@{user.username} just replied to your comment!',
+            "related_user": user.id,
+            "related_post": None,
+            "related_comment": comment.id,
+        }

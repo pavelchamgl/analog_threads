@@ -30,14 +30,56 @@ class UserProfileDataSerializer(serializers.ModelSerializer):
     location = serializers.CharField(required=False)
     photo = serializers.URLField(required=False)
     full_name = serializers.CharField(required=False)
+    is_private = serializers.BooleanField(required=False)
+    is_followed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['pk', 'username', 'full_name', 'bio', 'website', 'location', 'photo']
+        fields = ['pk', 'username', 'full_name', 'bio', 'website', 'location', 'photo', 'is_private', 'is_followed']
+
+    def get_is_followed(self, obj):
+        user_id = self.context['request'].user.id
+        followee_id = obj.id
+
+        if user_id == followee_id:
+            return "You"
+        try:
+            follow = Follow.objects.get(followee_id=followee_id, follower_id=user_id)
+        except Follow.DoesNotExist:
+            pass
+        try:
+            lookup_user_follow = Follow.objects.get(followee_id=user_id, follower_id=followee_id)
+        except Follow.DoesNotExist:
+            pass
+
+        if follow and lookup_user_follow:
+            return "Mutual Follow"
+        if follow:
+            return "Followed"
+        if lookup_user_follow:
+            return "Follow in response"
+        return "Followed" if follow.allowed else "Pending"
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        required=False,
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
+    bio = serializers.CharField(required=False)
+    website = serializers.CharField(required=False)
+    location = serializers.CharField(required=False)
+    photo = serializers.URLField(required=False)
+    full_name = serializers.CharField(required=False)
+    is_private = serializers.BooleanField(required=False)
+
+    class Meta:
+        model = User
+        fields = ['pk', 'username', 'full_name', 'bio', 'website', 'location', 'photo', 'is_private']
+
 
 
 class FollowersSerializer(serializers.ModelSerializer):
-    follower = UserProfileDataSerializer()
+    follower = UserProfileSerializer()
     is_followed = serializers.SerializerMethodField()
 
     class Meta:

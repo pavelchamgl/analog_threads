@@ -346,7 +346,7 @@ class ReplyCreateAPIView(APIView):
         serializer = ReplyCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        send_notification.delay()
+        send_notification.delay(comment.author.id, NotificationType.new_reply(request.user, comment))
         return Response({'message': 'Reply added successfully.'}, status=status.HTTP_201_CREATED)
 
 
@@ -419,7 +419,7 @@ class UsersSearchView(BaseSearchView):
     serializer_class = serializers.UserSearchSerializer
 
     def get_queryset(self):
-        search_obj = self.kwargs.get('type')
+        search_obj = self.kwargs.get('search_obj')
         queryset = User.objects.filter(username__icontains=search_obj)
         return queryset
 
