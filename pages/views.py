@@ -157,7 +157,7 @@ class UserPostsListAPIView(APIView):
 
     @swagger_auto_schema(
         responses={
-            201: PostViewSerializer,
+            200: PostViewSerializer,
             403: 'Access denied',
             404: 'User not found'
         }
