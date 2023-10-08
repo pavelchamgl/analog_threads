@@ -128,6 +128,13 @@ class PostDetailAPIView(APIView):
     """
     permission_classes = (IsAuthenticated, EmailVerified)
 
+    @swagger_auto_schema(
+        responses={
+            200: PostViewSerializer,
+            403: 'Access denied',
+            404: 'Post not found'
+        }
+    )
     def get(self, request, post_id):
         try:
             post = Post.objects.get(pk=post_id)
