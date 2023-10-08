@@ -14,7 +14,7 @@ from cloudinary.uploader import upload
 from config.tasks import send_multiple_notifications, send_notification
 from config.types import NotificationType
 from config.utils import ThreadsMainPaginatorLTE, ThreadsMainPaginatorInspector, ThreadsMainPaginator
-from users.models import User
+from users.models import User, Follow
 from users.permissions import EmailVerified
 from . import serializers
 from .base_views import BaseSearchView
@@ -128,13 +128,52 @@ class PostDetailAPIView(APIView):
     """
     permission_classes = (IsAuthenticated, EmailVerified)
 
+    @swagger_auto_schema(
+        responses={
+            200: PostViewSerializer,
+            403: 'Access denied',
+            404: 'Post not found'
+        }
+    )
     def get(self, request, post_id):
         try:
             post = Post.objects.get(pk=post_id)
+            author = post.author
+            if author.is_private:
+                is_follower = Follow.objects.filter(followee=author, follower=request.user, allowed=True).exists()
+                if not is_follower:
+                    return Response({'message': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
             serializer = PostViewSerializer(post, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Post.DoesNotExist:
             return Response({'message': 'Post not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class UserPostsListAPIView(APIView):
+    """
+    API view for user posts.
+    """
+    permission_classes = (IsAuthenticated, EmailVerified)
+
+    @swagger_auto_schema(
+        responses={
+            200: PostViewSerializer,
+            403: 'Access denied',
+            404: 'User not found'
+        }
+    )
+    def get(self, request, user_id):
+        try:
+            user = User.objects.get(pk=user_id)
+            if user.is_private:
+                is_follower = Follow.objects.filter(followee=user, follower=request.user, allowed=True).exists()
+                if not is_follower:
+                    return Response({'message': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+            posts = Post.objects.filter(author=user)
+            serializer = PostViewSerializer(posts, context={'request': request}, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class RepostCreateAPIVIew(APIView):
