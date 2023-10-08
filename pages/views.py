@@ -142,6 +142,33 @@ class PostDetailAPIView(APIView):
             return Response({'message': 'Post not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
+class UserPostsListAPIView(APIView):
+    """
+    API view for user posts.
+    """
+    permission_classes = (IsAuthenticated, EmailVerified)
+
+    @swagger_auto_schema(
+        responses={
+            201: PostViewSerializer,
+            403: 'Access denied',
+            404: 'User not found'
+        }
+    )
+    def get(self, request, user_id):
+        try:
+            user = User.objects.get(pk=user_id)
+            if user.is_private:
+                is_follower = Follow.objects.filter(followee=user, follower=request.user, allowed=True).exists()
+                if not is_follower:
+                    return Response({'message': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+            posts = Post.objects.filter(author=user)
+            serializer = PostViewSerializer(posts, context={'request': request}, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
 class RepostCreateAPIVIew(APIView):
     permission_classes = (IsAuthenticated, EmailVerified)
 
