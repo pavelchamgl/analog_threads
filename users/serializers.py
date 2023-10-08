@@ -55,10 +55,10 @@ class UserProfileDataSerializer(serializers.ModelSerializer):
         if follow and lookup_user_follow:
             return "Mutual Follow"
         if follow:
-            return "Followed"
+            return "Followed" if follow.allowed else "Pending"
         if lookup_user_follow:
             return "Follow in response"
-        return "Followed" if follow.allowed else "Pending"
+        return "Not Followed"
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -112,6 +112,15 @@ class FollowsSerializer(serializers.ModelSerializer):
 class MutualFollowSerializer(serializers.ModelSerializer):
     followee = UserProfileDataSerializer()
     follower = UserProfileDataSerializer()
+
+    class Meta:
+        model = Follow
+        fields = ['followee', 'follower', 'allowed']
+
+
+class MutualFollowSubscribeSerializer(serializers.ModelSerializer):
+    followee = UserProfileSerializer()
+    follower = UserProfileSerializer()
 
     class Meta:
         model = Follow

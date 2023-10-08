@@ -174,17 +174,19 @@ class MutualFollowCheckView(APIView):
 
             followee_follow = Follow.objects.filter(follower_id=followee_id, followee_id=self.request.user.id,
                                                     allowed=True)
-            if current_user_follow.allowed and followee_follow:
-                return Response({'detail': 'Mutual Follow'})
+            if current_user_follow:
+                if current_user_follow.allowed and followee_follow:
+                    return Response({'detail': 'Mutual Follow'})
 
-            elif not current_user_follow.allowed:
-                return Response({'detail': 'Pending'})
+                elif not current_user_follow.allowed:
+                    return Response({'detail': 'Pending'})
 
-            elif current_user_follow.allowed:
-                return Response({'detail': 'Followed'})
+                elif current_user_follow.allowed:
+                    return Response({'detail': 'Followed'})
 
-            if current_user_follow.allowed:
-                return Response({'detail': 'Follow you'})
+                if current_user_follow.allowed:
+                    return Response({'detail': 'Follow you'})
+            return Response({'detail': 'Not followed'})
         else:
             return Response({'detail': "User does not exist"})
 
@@ -192,12 +194,12 @@ class MutualFollowCheckView(APIView):
 class FollowActionView(APIView):
     """API view for performing a follow action on a user profile."""
     primary_serializer = serializers.FollowActionSerializer
-    secondary_serializer = serializers.MutualFollowSerializer
+    secondary_serializer = serializers.MutualFollowSubscribeSerializer
     permission_classes = (IsAuthenticated, permissions.EmailVerified)
 
     @swagger_auto_schema(
         request_body=serializers.FollowActionSerializer,
-        responses={status.HTTP_200_OK: serializers.MutualFollowSerializer},
+        responses={status.HTTP_200_OK: serializers.MutualFollowSubscribeSerializer},
     )
     def post(self, request):
         serializer = self.primary_serializer(data=request.data)
