@@ -46,11 +46,11 @@ class UserProfileDataSerializer(serializers.ModelSerializer):
         try:
             follow = Follow.objects.get(followee_id=followee_id, follower_id=user_id)
         except Follow.DoesNotExist:
-            pass
+            follow = None
         try:
             lookup_user_follow = Follow.objects.get(followee_id=user_id, follower_id=followee_id)
         except Follow.DoesNotExist:
-            pass
+            lookup_user_follow = None
 
         if follow and lookup_user_follow:
             return "Mutual Follow"

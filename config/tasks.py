@@ -10,7 +10,7 @@ from users.models import User
 
 
 @shared_task
-def send_notification(recipient_id: int, notification_data: dict):
+def send_notification(recipient_id: int, notification_data: dict, create_notification=True):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         str(recipient_id),
@@ -19,21 +19,22 @@ def send_notification(recipient_id: int, notification_data: dict):
             "message": f'"{notification_data["type"]}": "{notification_data["message"]}"',
         },
     )
-    Notification.objects.create(
-        owner_id=recipient_id,
-        text=notification_data["message"],
-        type=notification_data['type'],
-        related_post=notification_data.get("related_post"),
-        related_comment=notification_data.get("related_comment"),
-        related_user_id=notification_data.get("related_user"),
-    )
+    if create_notification:
+        Notification.objects.create(
+            owner_id=recipient_id,
+            text=notification_data["message"],
+            type=notification_data['type'],
+            related_post=notification_data.get("related_post"),
+            related_comment=notification_data.get("related_comment"),
+            related_user_id=notification_data.get("related_user"),
+        )
 
 
 @shared_task
-def send_multiple_notifications(notification_type: dict, **filters):
+def send_multiple_notifications(notification_type: dict, create_notification=True, **filters,):
     users = User.objects.filter(**filters)
     for user in users:
-        send_notification(user.id, notification_type)
+        send_notification(user.id, notification_type, create_notification=create_notification)
 
 
 @shared_task

@@ -111,7 +111,7 @@ class PostModelViewSet(mixins.CreateModelMixin,
         serializer.is_valid(raise_exception=True)
         serializer.save()
         send_multiple_notifications.delay(
-            NotificationType.new_thread(), follower__followee=request.user.id, follower__allowed=True
+            NotificationType.new_thread(), create_notification=False, follower__followee=request.user.id, follower__allowed=True
         )
 
         return Response({'message': 'Post added successfully.'},

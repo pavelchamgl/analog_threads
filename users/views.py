@@ -164,7 +164,6 @@ class MutualFollowCheckView(APIView):
         serializer = self.serializer(data=request.data)
         if serializer.is_valid():
             followee_id = serializer.validated_data['followee'].id
-            print(followee_id, self.request.user.id)
             if request.user.id == followee_id:
                 return Response({'detail': 'You'})
             try:
