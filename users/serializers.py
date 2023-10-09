@@ -17,7 +17,7 @@ from users.utils import otp_update_or_create
 class SelfUserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['pk', 'username', 'full_name', 'bio', 'website', 'location', 'photo', 'is_email_verify']
+        fields = ['pk', 'username', 'full_name', 'bio', 'website', 'location', 'photo', 'is_private', 'is_email_verify']
 
 
 class UserProfileDataSerializer(serializers.ModelSerializer):
